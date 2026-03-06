@@ -1,0 +1,129 @@
+﻿@{
+    ViewData["Title"] = "Regioni";
+}
+<div class="container p-3">
+    <div class="row pt-4">
+        <div class="col-6">
+            <h2 class="text-primary">Lista Regioni</h2>
+        </div>
+        
+    </div>
+
+    <div class="row mb-5 mt-4">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="search" id="ricercaRegioni" class="form-control border-start-0"
+                       placeholder="Scrivi il nome della regione...">
+            </div>
+        </div>
+        <div class="col-8 text-end">
+            @if (ViewBag.PuoCreare)
+            {
+                <a asp-controller="Regioni" asp-action="CreaRegione" class="btn btn-outline-info">
+                    <i class="bi bi-plus-circle"></i> &nbsp; Crea Nuova Regione
+                </a>
+            }
+        </div>
+    </div>
+    <table id="tabellaRegioni" class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th class="col-nome" style="width: 15%" scope="col">Nome</th>
+                <th style="width: 20%" scope="col">Codice ISTAT</th>
+                <th style="width: 20%" scope="col">Inizio Validità</th>
+                <th style="width: 20%" scope="col">Fine Validità</th>
+                @if (ViewBag.PuoCreare || ViewBag.PuoEliminare)
+                {
+                    <th class="col-azioni"></th>
+                }
+                
+            </tr>
+        </thead>
+        <tbody id="regioniBody">
+            
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            const puoCreare = @ViewBag.PuoCreare.ToString().ToLower();
+            const puoEliminare = @ViewBag.PuoEliminare.ToString().ToLower();
+
+            caricaTabella();
+
+            let timer;
+            $('#ricercaRegioni').on('keyup search', function () {
+                clearTimeout(timer);
+                const query = $(this).val();
+
+                timer = setTimeout(function () {
+                    caricaTabella(query);
+                }, 500);
+            });
+
+            function formattaData(dataString) {
+                const data = new Date(dataString);
+
+                if (isNaN(data.getTime())) return dataString;
+
+                const giorno = String(data.getDate()).padStart(2, '0');
+                const mese = String(data.getMonth() + 1).padStart(2, '0');
+                const anno = String(data.getFullYear());
+
+                return `${giorno}/${mese}/${anno}`;
+            }
+
+            function caricaTabella(search = "") {
+                $.get('/Regioni/GetRegioni', { searchTerm: search }, function (data) {
+                    let html = '';
+
+                    if (data.length === 0) {
+                        html = '<tr><td colspan="5" class="text-center table-secondary">Nessuna regione trovata</td></tr>';
+                    } else {
+                        data.forEach(r => {
+                            html += `
+                                <tr class="table-secondary">
+                                    <td class="col-nome">${r.descrizione}</td>
+                                    <td>${r.istat}</td>
+                                    <td>${formattaData(r.inizioValidita)}</td>
+                                    <td>${formattaData(r.fineValidita)}</td>`
+
+                            if (puoCreare || puoEliminare)
+                            {
+                                html += `
+                                    <td>
+                                        <div class="justify-content-center d-flex gap-2">`
+
+                                if (puoCreare)
+                                {
+                                    html += `<a href="/Regioni/ModificaRegione?codiceRegione=${r.codice}"
+                                               class="btn btn-outline-warning btn-uniform">
+                                               <i class="bi bi-pencil-square"></i>Edit
+                                            </a>`;
+                                }
+
+                                if (puoEliminare)
+                                {
+                                    html += `<a href="/Regioni/EliminaRegione?id=${r.codice}"
+                                               class="btn btn-outline-danger btn-uniform">
+                                               <i class="bi bi-trash-fill"></i>Delete
+                                            </a>`;
+                                }
+
+                                html += `</div></td>`
+                            }
+                            html += `</tr>`;
+                        });
+                    }
+                    $('#regioniBody').html(html);
+                });
+            }
+        });
+    </script>
+}

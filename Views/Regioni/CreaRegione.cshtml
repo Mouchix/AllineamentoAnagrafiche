@@ -1,0 +1,84 @@
+﻿@model Regione
+
+<form id="formCreaRegione" method="post">
+    <div class="row pb-2">
+        <h2 class="text-primary">Crea Regione</h2>
+        <hr />
+    </div>
+    <div class="card border-primary mb-3">
+        <div class="card-header bg-primary text-white"><h5>Dati Regione</h5></div>
+        <div class="card-body">
+   
+            <div class="mb-3">
+                <label asp-for="Istat">Codice ISTAT</label>
+                <input asp-for="Istat" type="text" class="form-control" />
+                <span asp-validation-for="Istat" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Descrizione">Nome</label>
+                <input asp-for="Descrizione" type="text" class="form-control" />
+                <span asp-validation-for="Descrizione" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="InizioValidita">Data inizio validità</label>
+                <input asp-for="InizioValidita" type="date" class="form-control" />
+                <span asp-validation-for="InizioValidita" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FineValidita">Data fine validità</label>
+                <input asp-for="FineValidita" type="date" class="form-control" />
+                <span asp-validation-for="FineValidita" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 text-end">
+            <button type="button" class="btn btn-info" style="width:180px" id="btnCrea">Crea Regione</button>
+            <a asp-controller="Regioni" asp-action="IndexRegioni" class="btn btn-secondary" style="width:180px">Torna alle regioni</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+    <script>        
+        $(document).ready(function () {
+            $('#btnCrea').click(function () {
+                const $form = $('#formCreaRegione');
+
+                if (!$form.valid()) return;
+
+                const payload = {
+                    "regioni": [
+                        {
+                            "codiceISTAT": $('#Istat').val(),
+                            "descrizione": $('#Descrizione').val().toUpperCase(),
+                            "inizioValidita": $('#InizioValidita').val(),
+                            "fineValidita": $('#FineValidita').val()
+                        }
+                    ]
+                }
+
+                $.ajax({
+                    url: '/Regioni/AggiornaRegioni',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (result) {
+                        Notifica.success('Regione creata correttamente', () => {
+                            window.location.href = '/Regioni/IndexRegioni';
+                        });
+                    },
+                    error: function(xhr) {
+                        Notifica.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+
+}

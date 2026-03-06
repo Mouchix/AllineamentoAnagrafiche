@@ -1,0 +1,153 @@
+﻿@{
+    ViewData["Title"] = "Province";
+}
+<div class="container p-3">
+    <div class="row pt-4">
+        <div class="col-6">
+            <h2 class="text-primary">Lista Province</h2>
+        </div>
+        
+    </div>
+
+    <div class="row mb-5 mt-4">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="search" id="ricercaProvince" class="form-control border-start-0"
+                       placeholder="Scrivi il nome della provincia...">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="regioniSelect">
+
+            </select>
+        </div>
+        <div class="col-6 text-end">
+            @if (ViewBag.PuoCreare)
+            {
+                <a asp-controller="Province" asp-action="CreaProvincia" class="btn btn-outline-info">
+                    <i class="bi bi-plus-circle"></i> &nbsp; Crea Nuova Provincia
+                </a>
+            }
+        </div>
+    </div>
+
+    <table id="tabellaProvince" class="table table-hover" style="width:100%">
+        <thead>
+            <tr>
+                <th class="col-nome" style="width: 15%" scope="col">Nome</th>
+                <th style="width: 15%" scope="col">Codice ISTAT</th>
+                <th style="width: 15%" scope="col">Inizio Validità</th>
+                <th style="width: 15%" scope="col">Fine Validità</th>
+                <th class="col-nome" style="width: 20%" scope="col">Regione d'Appartenenza</th>
+                @if (ViewBag.PuoCreare || ViewBag.PuoEliminare)
+                {
+                    <th></th>
+                }
+            </tr>
+        </thead>
+        <tbody id="provinceBody">
+
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            const puoCreare = @ViewBag.PuoCreare.ToString().ToLower();
+            const puoEliminare = @ViewBag.PuoEliminare.ToString().ToLower();
+
+            caricaSelect();
+
+            caricaTabella();
+
+            let timer;
+            $('#ricercaProvince').on('keyup search', function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    caricaTabella();
+                }, 500);
+            });
+
+            $('#regioniSelect').on('change', function (){
+                caricaTabella();
+            });
+
+            function caricaSelect(){
+                $.get('/Regioni/GetRegioni', function (data) {
+                    let html = '<option value="">Tutte le regioni</option>';
+                    data.forEach(r => {
+                        html += `<option value="${r.codice}">${r.descrizione}</option>`;
+                    });
+                    $('#regioniSelect').html(html);
+                });
+            }
+
+            function formattaData(dataString) {
+                const data = new Date(dataString);
+
+                if (isNaN(data.getTime())) return dataString;
+
+                const giorno = String(data.getDate()).padStart(2, '0');
+                const mese = String(data.getMonth() + 1).padStart(2, '0');
+                const anno = String(data.getFullYear());
+
+                return `${giorno}/${mese}/${anno}`;
+            }
+
+            function caricaTabella() {
+                const search = $('#ricercaProvince').val();
+                const regioneId = $('#regioniSelect').val();
+
+                $.get('/Province/GetProvince', { searchTerm: search, regioneFiltro: regioneId }, function (data) {
+                    let html = '';
+
+                    if (data.length === 0) {
+                        html = '<tr><td colspan="6" class="text-center table-secondary">Nessuna provincia trovata</td></tr>';
+                    } else {
+                        data.forEach(p => {
+                            html += `
+                                <tr class="table-secondary">
+                                    <td class="col-nome" >${p.descrizione}</td>
+                                    <td>${p.istat}</td>
+                                    <td>${formattaData(p.inizioValidita)}</td>
+                                    <td>${formattaData(p.fineValidita)}</td>
+                                    <td class="col-nome" >${p.nomeRegione}</td>`;
+
+                            if (puoCreare || puoEliminare)
+                            {
+                                html += `
+                                    <td>
+                                        <div class="justify-content-center d-flex gap-2">`
+
+                                if (puoCreare)
+                                {
+                                    html += `<a href="/Province/ModificaProvincia?codiceProvincia=${p.codice}&codiceRegione=${p.codiceRegione}"
+                                               class="btn btn-outline-warning btn-uniform">
+                                               <i class="bi bi-pencil-square"></i>Edit
+                                            </a>`;
+                                }
+
+                                if (puoEliminare)
+                                {
+                                    html += `<a href="/Province/EliminaProvincia?id=${p.codice}"
+                                               class="btn btn-outline-danger btn-uniform">
+                                               <i class="bi bi-trash-fill"></i>Delete
+                                            </a>`;
+                                }
+
+                                html += `</div></td>`
+                            }
+                            html += `</tr>`;
+                        });
+                    }
+                    $('#provinceBody').html(html);
+                });
+            }
+        });
+    </script>
+}

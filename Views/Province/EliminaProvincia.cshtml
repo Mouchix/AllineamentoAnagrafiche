@@ -1,0 +1,80 @@
+﻿@model Provincia
+
+<form id="formEliminaProvincia" method="post">
+    <div class="row pb-2">
+        <h2 class="text-primary">Elimina Provincia</h2>
+        <hr />
+    </div>
+    <div class="card border-secondary mb-3">
+        <div class="card-header bg-primary text-white"><h5>Dati Provincia</h5></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Istat">Codice ISTAT</label>
+                <input asp-for="Istat" type="text" class="form-control" disabled />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Descrizione">Nome</label>
+                <input asp-for="Descrizione" type="text" class="form-control" disabled />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="InizioValidita">Data inizio validità</label>
+                <input asp-for="InizioValidita" type="date" class="form-control" disabled />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FineValidita">Data fine validità</label>
+                <input asp-for="FineValidita" type="date" class="form-control" disabled />
+            </div>
+
+            <div class="mb-3 form-check">
+                <input class="form-check-input" type="checkbox" value="" id="checkForza">
+                <label class="form-check-label" for="checkForza">
+                    Forzare cancellazione se Elemento referenziato nel DB
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 text-end">
+            <button type="button" class="btn btn-danger" style="width:180px" id="btnElimina">Elimina Provincia</button>
+            <a asp-controller="Province" asp-action="IndexProvince" class="btn btn-secondary" style="width:200px">Torna alle Province</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $('#btnElimina').click(function () {
+                $('#Istat').prop('disabled', false);
+        
+                const payload = {
+                    "codiceISTAT": $('#Istat').val(),
+                    "forzaCancellazione": $('#checkForza').is(':checked')
+                }
+
+                $('#Istat').prop('disabled', true);
+
+                $.ajax({
+                    url: '/Province/CancellaProvince',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (result) {
+                        Notifica.success('Provincia eliminata correttamente', () => {
+                            window.location.href = '/Province/IndexProvince';
+                        });
+                    },
+                    error: function(xhr) {
+                        Notifica.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+
+}

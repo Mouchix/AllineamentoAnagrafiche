@@ -1,0 +1,63 @@
+﻿@using AllineamentoAnagrafiche.DTOs
+@model UserDto
+
+<form id="formRegistrazione" method="post">
+    <div class="row pb-2">
+        <h2 class="text-primary">Registrazione</h2>
+        <hr />
+    </div>
+    <div class="card border-primary mb-3">
+        <div class="card-header bg-primary text-white"><h5>Dati Utente</h5></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Username">Username</label>
+                <input asp-for="Username" type="text" class="form-control" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password">Password</label>
+                <input asp-for="Password" type="password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 text-end">
+            <button type="button" class="btn btn-primary" style="width:180px" id="btnRegistra">Registra</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $('#btnRegistra').click(function () {
+                const $form = $('#formRegistrazione');
+
+                if(!$form.valid()) return;
+
+                const payload = {
+                    "username": $('#Username').val(),
+                    "password": $('#Password').val(),
+                }
+
+                $.ajax({
+                    url: '/Utenti/RegistraUtente',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (result) {
+                        Notifica.success('Registrazione avvenuta correttamente', () => {
+                            window.location.href = '/Home/Index';
+                        });
+                    },
+                    error: function(xhr) {
+                        Notifica.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}

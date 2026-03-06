@@ -1,0 +1,23 @@
+﻿@if (TempData["success"] != null)
+{
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Azione eseguita',
+            text: '@TempData["success"]',
+            confirmButtonColor: '#158CBA'
+        });
+    </script>
+}
+
+@if (TempData["error"] != null)
+{
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Errore',
+            text: '@TempData["error"]',
+            confirmButtonColor: '#158CBA'
+        });
+    </script>
+}

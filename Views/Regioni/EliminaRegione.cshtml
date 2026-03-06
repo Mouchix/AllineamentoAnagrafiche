@@ -1,0 +1,80 @@
+﻿@model Regione
+
+<form id="formEliminaRegione" method="post">
+    <div class="row pb-2">
+        <h2 class="text-primary">Elimina Regione</h2>
+        <hr />
+    </div>
+    <div class="card border-primary mb-3">
+        <div class="card-header bg-primary text-white"><h5>Dati Regione</h5></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Istat">Codice ISTAT</label>
+                <input asp-for="Istat" type="text" class="form-control" disabled />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Descrizione">Nome</label>
+                <input asp-for="Descrizione" type="text" class="form-control" disabled />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="InizioValidita">Data inizio validità</label>
+                <input asp-for="InizioValidita" type="date" class="form-control" disabled />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FineValidita">Data fine validità</label>
+                <input asp-for="FineValidita" type="date" class="form-control" disabled />
+            </div>
+
+            <div class="mb-3 form-check">
+                <input class="form-check-input" type="checkbox" value="" id="checkForza">
+                <label class="form-check-label" for="checkForza">
+                    Forzare cancellazione se Elemento referenziato nel DB
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 text-end">
+            <button type="button" class="btn btn-danger" style="width:180px" id="btnElimina">Elimina Regione</button>
+            <a asp-controller="Regioni" asp-action="IndexRegioni" class="btn btn-secondary" style="width:180px">Torna alle Regioni</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $('#btnElimina').click(function () {
+               $('#Istat').prop('disabled', false);
+
+                const payload = {
+                    "codiceISTAT": $('#Istat').val(),
+                    "forzaCancellazione": $('#checkForza').is(':checked')
+                }
+
+                $('#Istat').prop('disabled', true);
+
+                $.ajax({
+                    url: '/Regioni/CancellaRegioni',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (result) {
+                        Notifica.success('Regione eliminata correttamente', () => {
+                            window.location.href = '/Regioni/IndexRegioni';
+                        });
+                    },
+                    error: function(xhr) {
+                        Notifica.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+
+}

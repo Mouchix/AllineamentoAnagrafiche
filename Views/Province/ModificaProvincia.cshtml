@@ -1,0 +1,125 @@
+﻿@using AllineamentoAnagrafiche.Models.ViewModels
+@model ProvinciaVM
+
+<form id="formModificaProvincia" method="post">
+    <div class="row pb-2">
+        <h2 class="text-primary">Modifica Provincia</h2>
+        <hr />
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card border-secondary h-100 shadow-sm">
+                <div class="card-header bg-primary text-white"><h5>1. Dati Provincia</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Provincia.Istat">Codice ISTAT</label>
+                        <input asp-for="Provincia.Istat" type="text" class="form-control" />
+                        <span asp-validation-for="Provincia.Istat" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Provincia.Descrizione">Nome</label>
+                        <input asp-for="Provincia.Descrizione" type="text" class="form-control" />
+                        <span asp-validation-for="Provincia.Descrizione" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Provincia.InizioValidita">Data inizio validità</label>
+                        <input asp-for="Provincia.InizioValidita" type="date" class="form-control" />
+                        <span asp-validation-for="Provincia.InizioValidita" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Provincia.FineValidita">Data fine validità</label>
+                        <input asp-for="Provincia.FineValidita" type="date" class="form-control" />
+                        <span asp-validation-for="Provincia.FineValidita" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-secondary h-100 shadow-sm">
+                <div class="card-header bg-info text-white"><h5>2. Dati Regione d'appartenenza</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Regione.Istat">Codice ISTAT Regione</label>
+                        <input asp-for="Regione.Istat" type="text" class="form-control" />
+                        <span asp-validation-for="Regione.Istat" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Regione.Descrizione">Nome Regione</label>
+                        <input asp-for="Regione.Descrizione" type="text" class="form-control" />
+                        <span asp-validation-for="Regione.Descrizione" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Regione.InizioValidita">Data inizio validità Regione</label>
+                        <input asp-for="Regione.InizioValidita" type="date" class="form-control" />
+                        <span asp-validation-for="Regione.InizioValidita" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Regione.FineValidita">Data fine validità Regione</label>
+                        <input asp-for="Regione.FineValidita" type="date" class="form-control" />
+                        <span asp-validation-for="Regione.FineValidita" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 text-end">
+            <button type="button" class="btn btn-warning mt-3" style="width:180px" id="btnModifica">Modifica Provincia</button>
+            <a asp-controller="Province" asp-action="IndexProvince" class="btn btn-secondary mt-3" style="width:200px">Torna alle Province</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+
+        $(document).ready(function () {
+            $('#btnModifica').click(function () {
+                const $form = $('#formModificaProvincia');
+
+                if (!$form.valid()) return;
+
+                const payload = {
+                    "province": [
+                        {
+                            "codiceISTAT": $('#Provincia_Istat').val(),
+                            "descrizione": $('#Provincia_Descrizione').val().toUpperCase(),
+                            "inizioValidita": $('#Provincia_InizioValidita').val(),
+                            "fineValidita": $('#Provincia_FineValidita').val(),
+                            "regione": {
+                                "codiceISTAT": $('#Regione_Istat').val(),
+                                "descrizione": $('#Regione_Descrizione').val().toUpperCase(),
+                                "inizioValidita": $('#Regione_InizioValidita').val(),
+                                "fineValidita": $('#Regione_FineValidita').val()
+                            }
+                        }
+                    ]
+                };
+
+                $.ajax({
+                    url: '/Province/AggiornaProvince',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (result) {
+                        Notifica.success('Provincia aggiornata correttamente', () => {
+                            window.location.href = '/Province/IndexProvince';
+                        });
+                    },
+                    error: function(xhr) {
+                        Notifica.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}

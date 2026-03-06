@@ -1,0 +1,166 @@
+﻿using AllineamentoAnagrafiche.Data;
+using AllineamentoAnagrafiche.DTOs;
+using AllineamentoAnagrafiche.Models;
+using AllineamentoAnagrafiche.Models.ViewModels;
+using AllineamentoAnagrafiche.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+
+namespace AllineamentoAnagrafiche.Controllers
+{
+    public class ProvinceController : BaseController
+    {
+        private readonly UpsertService<Regione, RegioneDto> rUpsertService;
+        private readonly UpsertService<Provincia, ProvinciaDto> pUpsertService;
+        private readonly RemoveService<Provincia, Comune> removeService;
+
+        public ProvinceController(AnagraficheContext db, AuthService auth, UpsertService<Regione, RegioneDto> rService, UpsertService<Provincia, ProvinciaDto> pService, RemoveService<Provincia, Comune> remove, LogService lService)
+            : base(db, auth, lService)
+        {
+            this.rUpsertService = rService;
+            this.pUpsertService = pService;
+            this.removeService = remove;
+        }
+
+        public IActionResult IndexProvince()
+        {
+            if (!CheckPermission(Costanti.ProvinceVisualizza)) return Forbid();
+            ViewBag.PuoCreare = CheckPermission(Costanti.ProvinceUpsert);
+            ViewBag.PuoEliminare = CheckPermission(Costanti.ProvinceDelete);
+            return View();
+        }
+
+        public IActionResult CreaProvincia()
+        {
+            if (!CheckPermission(Costanti.ProvinceVisualizza) || !CheckPermission(Costanti.ProvinceUpsert)) return Forbid();
+            return View();
+        }
+
+        public IActionResult ModificaProvincia(int? codiceProvincia, int? codiceRegione)
+        {
+            if (!CheckPermission(Costanti.ProvinceVisualizza) || !CheckPermission(Costanti.ProvinceUpsert)) return Forbid();
+
+            Provincia? provinciaFromDb = GetProvincia(codiceProvincia);
+            Regione? regioneFromDb = _dbContext.Regioni.Find(codiceRegione);
+
+            ProvinciaVM provinciaVM = new()
+            {
+                Provincia = provinciaFromDb,
+                Regione = regioneFromDb,
+            };
+            return View(provinciaVM);
+        }
+
+        public IActionResult EliminaProvincia(int? id)
+        {
+            if (!CheckPermission(Costanti.ProvinceVisualizza) || !CheckPermission(Costanti.ProvinceDelete)) return Forbid();
+
+            var provinciaFromDb = GetProvincia(id);
+
+            return View(provinciaFromDb);
+        }
+
+
+        [HttpPost]
+        //[ValidateAntiForgeryToken]
+        public IActionResult AggiornaProvince([FromBody]ProvinciaRootDto province)
+        {
+            string metodo = Costanti.ProvinceUpsert;
+            string request = System.Text.Json.JsonSerializer.Serialize(province);
+
+            AuthResponse result = CheckUser(metodo);
+
+            if (result.Response.Equals("AA"))
+            {
+                using var transaction = _dbContext.Database.BeginTransaction();
+
+                try
+                {
+                    if (!province.Province.IsNullOrEmpty())
+                    {
+                        foreach (ProvinciaDto provincia in province.Province)
+                        {
+                            int idRegioneReferenziata = this.rUpsertService.Upsert(provincia.Regione, r => r.RegIstat == provincia.Regione.CodiceISTAT);
+
+                            this.pUpsertService.Upsert(provincia, p => p.ProIstat == provincia.CodiceISTAT, p => p.ProRegCodice = idRegioneReferenziata);
+                        }
+                        result.Response = "AA";
+                    }
+                    else
+                    {
+                        result.Response = "AE: dati inseriti non correttamente";
+                    }
+                    transaction.Commit();
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    _dbContext.ChangeTracker.Clear();
+                    result.Response = "AE: " + ex.Message;
+                }
+            }
+
+            _logService.RegistraLog(metodo, request, result.Response, result.Utente?.UserCodice ?? Costanti.SystemUserId);
+
+            _dbContext.SaveChanges();
+            return result.Response.Equals("AA") ? Ok() : BadRequest(result.Response);
+
+        }
+
+        [HttpPost]
+        //[ValidateAntiForgeryToken]
+        public IActionResult CancellaProvince([FromBody]DeleteByIstatRequest request)
+        {
+            string metodo = Costanti.ProvinceDelete;
+
+            AuthResponse result = CheckUser(metodo);
+
+            if(result.Response.Equals("AA"))
+            {
+                result.Response = removeService.Remove(request.ForzaCancellazione, p => p.ProIstat == request.CodiceISTAT, pro => (c => c.ComProCodice == pro.Codice));
+            }
+
+            _logService.RegistraLog(metodo, request.CodiceISTAT + " - Eliminazione forzata: " + request.ForzaCancellazione, result.Response, result.Utente?.UserCodice ?? Costanti.SystemUserId);
+
+            _dbContext.SaveChanges();
+            return result.Response.Equals("AA") ? Ok() : BadRequest(result.Response);
+        }
+
+        [HttpGet]
+        public IActionResult GetProvince(string searchTerm = "", int? regioneFiltro = null)
+        {
+            if (!CheckPermission(Costanti.ProvinceVisualizza)) return Forbid();
+
+            var province = _dbContext.Province.AsQueryable();
+
+            if (regioneFiltro != null)
+            {
+                province = province.Where(p => p.ProRegCodice == regioneFiltro);
+            }
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                province = province.Where(p => p.ProDescrizione.Contains(searchTerm));
+            }
+
+            var result = province.Select(p => new {
+                codice = p.Codice,
+                descrizione = p.Descrizione,
+                istat = p.Istat,
+                inizioValidita = p.InizioValidita,
+                fineValidita = p.FineValidita,
+                nomeRegione = p.ProRegCodiceNavigation.Descrizione,
+                codiceRegione = p.ProRegCodiceNavigation.Codice
+            }).ToList();
+
+            return Json(result);
+        }
+
+        [HttpGet]
+        public Provincia? GetProvincia(int? codiceProvincia)
+        {
+            if (!CheckPermission(Costanti.ProvinceVisualizza)) return null;
+            return _dbContext.Province.Find(codiceProvincia);
+        }
+    }
+}

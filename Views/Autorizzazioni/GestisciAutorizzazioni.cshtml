@@ -1,0 +1,89 @@
+﻿@{
+    ViewData["Title"] = "Autorizzazioni";
+}
+<div class="container p-3">
+    <div class="row pt-4">
+        <div class="col-6">
+            <h2 class="text-primary">Lista Autorizzazioni</h2>
+        </div>
+
+    </div>
+
+    <div class="row mb-5 mt-4">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="search" id="ricercaAutorizzazioni" class="form-control border-start-0"
+                       placeholder="Cerca per username">
+            </div>
+        </div>
+        <div class="col-8 text-end">
+            <a asp-controller="Autorizzazioni" asp-action="CreaAutorizzazione" class="btn btn-outline-info">
+                <i class="bi bi-plus-circle"></i> &nbsp; Inserisci Nuova Autorizzazione
+            </a>
+        </div>
+    </div>
+    <table id="tabellaAutorizzazioni" class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th class="col-nome" style="width: 40%" scope="col">Username</th>
+                <th class="col-nome" style="width: 40%" scope="col">Nome Metodo</th>
+                <th class="col-azioni" style="width: 20%" scope="col"></th>
+            </tr>
+        </thead>
+        <tbody id="autorizzazioniBody">
+            <tr>
+                <td colspan="3">Cercare un utente per vedere le autorizzazioni</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            let timer;
+            $('#ricercaAutorizzazioni').on('keyup search', function () {
+                clearTimeout(timer);
+                const query = $(this).val();
+
+                timer = setTimeout(function () {
+                    caricaTabella(query);
+                }, 500);
+            });
+
+            function caricaTabella(search = "") {
+                if(search == ""){
+                    html = '<tr><td colspan="3" class="text-center table-secondary">Cercare un utente per vedere le autorizzazioni</td></tr>';
+                    $('#autorizzazioniBody').html(html);
+                }else{
+                    $.get('/Autorizzazioni/GetAutorizzazioni', { searchTerm: search }, function (data) {
+                        let html = '';
+
+                        if (data.length === 0) {
+                            html = '<tr><td colspan="3" class="text-center table-secondary">Nessun utente trovato</td></tr>';
+                        } else {
+                            data.forEach(a => {
+                                html += `
+                                    <tr class="table-secondary">
+                                        <td class="col-nome">${a.username}</td>
+                                        <td class="col-nome">${a.nomeMetodo}</td>
+                                        <td>
+                                            <a href="/Autorizzazioni/EliminaAutorizzazione?codiceAutorizzazione=${a.codiceAutorizzazione}"
+                                               class="btn btn-outline-danger btn-uniform">
+                                               <i class="bi bi-trash-fill"></i>Delete
+                                            </a>
+                                        </td>
+                                    </tr>`
+                            });
+                        }
+                        $('#autorizzazioniBody').html(html);
+                    });
+                }  
+            }
+        });
+    </script>
+}

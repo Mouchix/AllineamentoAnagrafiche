@@ -1,0 +1,282 @@
+﻿@using AllineamentoAnagrafiche.Models.ViewModels
+@model ComuneVM
+
+<form id="formCreaComune" method="post">
+    <div class="row pb-2">
+        <h2 class="text-primary">Crea Comune</h2>
+        <hr />
+    </div>
+    <div class="card border-secondary mb-3">
+        <div class="card-header bg-primary text-white"><h5>1. Dati Comune</h5></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Comune.Istat">Codice ISTAT</label>
+                <input asp-for="Comune.Istat" type="text" class="form-control" />
+                <span asp-validation-for="Comune.Istat" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Comune.Descrizione">Nome</label>
+                <input asp-for="Comune.Descrizione" type="text" class="form-control" />
+                <span asp-validation-for="Comune.Descrizione" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Comune.InizioValidita">Data inizio validità</label>
+                <input asp-for="Comune.InizioValidita" type="date" class="form-control" />
+                <span asp-validation-for="Comune.InizioValidita" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Comune.FineValidita">Data fine validità</label>
+                <input asp-for="Comune.FineValidita" type="date" class="form-control" />
+                <span asp-validation-for="Comune.FineValidita" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card border-secondary h-100 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <div class="row align-items-center">
+                        <h5 class="col-md-7">2. Dati Provincia d'appartenenza</h5>
+                        <div class="col-md-5 text-end">
+                            <select class="form-select m-0" id="provinceSelect">
+
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Provincia.Istat">Codice ISTAT Provincia</label>
+                        <input asp-for="Provincia.Istat" type="text" class="form-control" />
+                        <span asp-validation-for="Provincia.Istat" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Provincia.Descrizione">Nome Provincia</label>
+                        <input asp-for="Provincia.Descrizione" type="text" class="form-control" />
+                        <span asp-validation-for="Provincia.Descrizione" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Provincia.InizioValidita">Data inizio validità Provincia</label>
+                        <input asp-for="Provincia.InizioValidita" type="date" class="form-control" />
+                        <span asp-validation-for="Provincia.InizioValidita" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Provincia.FineValidita">Data fine validità Provincia</label>
+                        <input asp-for="Provincia.FineValidita" type="date" class="form-control" />
+                        <span asp-validation-for="Provincia.FineValidita" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-secondary h-100 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <div class="row align-items-center">
+                        <h5 class="col-md-7">2. Dati Regione d'appartenenza</h5>
+                        <div class="col-md-5 text-end">
+                            <select class="form-select m-0" id="regioniSelect">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Regione.Istat">Codice ISTAT Regione</label>
+                        <input asp-for="Regione.Istat" type="text" class="form-control" />
+                        <span asp-validation-for="Regione.Istat" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Regione.Descrizione">Nome Regione</label>
+                        <input asp-for="Regione.Descrizione" type="text" class="form-control" />
+                        <span asp-validation-for="Regione.Descrizione" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Regione.InizioValidita">Data inizio validità Regione</label>
+                        <input asp-for="Regione.InizioValidita" type="date" class="form-control" />
+                        <span asp-validation-for="Regione.InizioValidita" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Regione.FineValidita">Data fine validità Regione</label>
+                        <input asp-for="Regione.FineValidita" type="date" class="form-control" />
+                        <span asp-validation-for="Regione.FineValidita" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 text-end">
+            <button type="button" class="btn btn-info mt-3" style="width:180px" id="btnCrea">Crea Comune</button>
+            <a asp-controller="Comuni" asp-action="IndexComuni" class="btn btn-secondary mt-3" style="width:180px">Torna ai Comuni</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+
+        $(document).ready(function () {
+
+            caricaSelectRegioni();
+            caricaSelectProvince();
+
+            function caricaSelectRegioni(){
+                $.get('/Regioni/GetRegioni', function (data) {
+                    let html = '<option value="">Seleziona regione salvata</option>';
+                    data.forEach(r => {
+                        html += `<option value="${r.codice}">${r.descrizione}</option>`;
+                    });
+                    $('#regioniSelect').html(html);
+                });
+            }
+
+            $('#regioniSelect').on('change', function (){
+                caricaFormRegione();
+                caricaSelectProvince();
+            });
+
+            $('#provinceSelect').on('change', function (){
+                caricaFormProvince();
+            });
+
+            function caricaFormRegione() {
+                const regioneId = $('#regioniSelect').val();
+
+                if (regioneId === "") {
+                    $('#Regione_Istat').val('');
+                    $('#Regione_Descrizione').val('');
+                    $('#Regione_InizioValidita').val('');
+                    $('#Regione_FineValidita').val('');
+                    return;
+                }
+
+                $.get('/Regioni/GetRegione', { codiceRegione: regioneId }, function (data) {
+                    if (data) {
+                        $('#Regione_Istat').val(data.istat);
+                        $('#Regione_Descrizione').val(data.descrizione);
+                        $('#Regione_InizioValidita').val(data.inizioValidita.split('T')[0]);
+                        $('#Regione_FineValidita').val(data.fineValidita.split('T')[0]);
+
+                        $('#Regione_Istat').valid();
+                        $('#Regione_Descrizione').valid();
+                        $('#Regione_InizioValidita').valid();
+                        $('#Regione_FineValidita').valid();
+                    }
+                });
+            }
+
+            function caricaSelectProvince(){
+                const regioneId = $('#regioniSelect').val();
+                const $provSelect = $('#provinceSelect');
+
+                resetFormProvince();
+
+                if (!regioneId) {
+                    $provSelect.html('<option value="" selected disabled>Seleziona prima la regione</option>');
+                    $provSelect.prop('disabled', true);
+                    $provSelect.val("");
+                    return;
+                }
+
+                const nomeRegione = $('#regioniSelect option:selected').text();
+
+                $.get('/Province/GetProvince', {regioneFiltro: regioneId}, function (data) {
+                    let html = `<option value="">Province ${nomeRegione} </option>`;
+                    data.forEach(p => {
+                        html += `<option value="${p.codice}">${p.descrizione}</option>`;
+                    });
+                    $provSelect.html(html);
+                    $provSelect.prop('disabled', false);
+                });
+            }
+
+            function caricaFormProvince(){
+                const provinciaId = $('#provinceSelect').val() || "";
+
+                if (!provinciaId || provinciaId === "") {
+                    resetFormProvince();
+                    return;
+                }
+
+  
+                $.get('/Province/GetProvincia', { codiceProvincia: provinciaId }, function (data) {
+                    if (data) {
+                        $('#Provincia_Istat').val(data.istat);
+                        $('#Provincia_Descrizione').val(data.descrizione);
+                        $('#Provincia_InizioValidita').val(data.inizioValidita.split('T')[0]);
+                        $('#Provincia_FineValidita').val(data.fineValidita.split('T')[0]);
+
+                        $('#Provincia_Istat').valid();
+                        $('#Provincia_Descrizione').valid();
+                        $('#Provincia_InizioValidita').valid();
+                        $('#Provincia_FineValidita').valid();
+                    }
+                });
+            }
+
+            function resetFormProvince(){
+                $('#Provincia_Istat').val('');
+                $('#Provincia_Descrizione').val('');
+                $('#Provincia_InizioValidita').val('');
+                $('#Provincia_FineValidita').val('');
+            }
+
+            $('#btnCrea').click(function () {
+                const $form = $('#formCreaComune');
+
+                if (!$form.valid()) return;
+
+                const payload = {
+                    "comuni": [
+                        {
+                            "codiceISTAT": $('#Comune_Istat').val(),
+                            "descrizione": $('#Comune_Descrizione').val().toUpperCase(),
+                            "inizioValidita": $('#Comune_InizioValidita').val(),
+                            "fineValidita": $('#Comune_FineValidita').val(),
+                            "provincia": {
+                                "codiceISTAT": $('#Provincia_Istat').val(),
+                                "descrizione": $('#Provincia_Descrizione').val().toUpperCase(),
+                                "inizioValidita": $('#Provincia_InizioValidita').val(),
+                                "fineValidita": $('#Provincia_FineValidita').val(),
+                                "regione": {
+                                    "codiceISTAT": $('#Regione_Istat').val(),
+                                    "descrizione": $('#Regione_Descrizione').val().toUpperCase(),
+                                    "inizioValidita": $('#Regione_InizioValidita').val(),
+                                    "fineValidita": $('#Regione_FineValidita').val()
+                                }
+                            }
+                        }
+                    ]
+                };
+
+                $.ajax({
+                    url: '/Comuni/AggiornaComuni',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (result) {
+                        Notifica.success('Comune creato correttamente', () => {
+                            window.location.href = '/Comuni/IndexComuni';
+                        });
+                    },
+                    error: function(xhr) {
+                        Notifica.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}

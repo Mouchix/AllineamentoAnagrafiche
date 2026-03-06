@@ -1,0 +1,192 @@
+﻿@{
+    ViewData["Title"] = "Comuni";
+}
+<div class="container p-3">
+    <div class="row pt-4">
+        <div class="col-6">
+            <h2 class="text-primary">Lista Comuni</h2>
+        </div>
+        
+    </div>
+
+    <div class="row mb-5 mt-4">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="search" id="ricercaComuni" class="form-control border-start-0"
+                       placeholder="Scrivi il nome del comune...">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="regioniSelect">
+                
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="provinceSelect">
+
+            </select>
+        </div>
+        <div class="col-3 text-end">
+            @if (ViewBag.PuoCreare)
+            {
+                <a asp-controller="Comuni" asp-action="CreaComune" class="btn btn-outline-info">
+                    <i class="bi bi-plus-circle"></i> &nbsp; Crea Nuovo Comune
+                </a>
+            }
+        </div>
+    </div>
+
+    <table id="tabellaComuni" class="table table-hover align-middle" style="width:100%">
+        <thead>
+            <tr>
+                <th class="col-nome" style="width: 15%" scope="col">Nome</th>
+                <th style="width: 15%" scope="col">Codice ISTAT</th>
+                <th style="width: 15%" scope="col">Inizio Validità</th>
+                <th style="width: 15%" scope="col">Fine Validità</th>
+                <th class="col-nome" style="width: 16%" scope="col">Provincia d'Appartenenza</th>
+                @if (ViewBag.PuoCreare || ViewBag.PuoEliminare)
+                {
+                    <th scope="col"></th>
+                }
+            </tr>
+        </thead>
+        <tbody id="comuniBody">
+            
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            const puoCreare = @ViewBag.PuoCreare.ToString().ToLower();
+            const puoEliminare = @ViewBag.PuoEliminare.ToString().ToLower();
+
+            caricaSelectRegioni();
+            caricaSelectProvince();
+
+            caricaTabella();
+
+            let timer;
+            $('#ricercaComuni').on('keyup search', function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    caricaTabella();
+                }, 500);
+            });
+
+            $('#regioniSelect').on('change', function (){
+                caricaSelectProvince();
+            });
+
+            $('#provinceSelect').on('change', function (){
+                caricaTabella();
+            });
+
+            function caricaSelectRegioni(){
+                $.get('/Regioni/GetRegioni', function (data) {
+                    let html = '<option value="">Tutte le regioni</option>';
+                    data.forEach(r => {
+                        html += `<option value="${r.codice}">${r.descrizione}</option>`;
+                    });
+                    $('#regioniSelect').html(html);
+                });
+            }
+
+            function caricaSelectProvince(){
+                const regioneId = $('#regioniSelect').val();
+                const $provSelect = $('#provinceSelect');
+
+                if (!regioneId) {
+                    $provSelect.html('<option value="" selected disabled>Seleziona prima la regione</option>');
+                    $provSelect.prop('disabled', true);
+                    $provSelect.val("");
+                    caricaTabella();
+                    return;
+                }
+
+                const nomeRegione = $('#regioniSelect option:selected').text();
+
+                $.get('/Province/GetProvince', {regioneFiltro: regioneId}, function (data) {
+                    let html = `<option value="">Province ${nomeRegione} </option>`;
+                    data.forEach(p => {
+                        html += `<option value="${p.codice}">${p.descrizione}</option>`;
+                    });
+                    $provSelect.html(html);
+                    $provSelect.prop('disabled', false);
+                    
+                    caricaTabella();
+                });
+            }
+
+            function formattaData(dataString) {
+                const data = new Date(dataString);
+
+                if (isNaN(data.getTime())) return dataString;
+
+                const giorno = String(data.getDate()).padStart(2, '0');
+                const mese = String(data.getMonth() + 1).padStart(2, '0');
+                const anno = String(data.getFullYear());
+
+                return `${giorno}/${mese}/${anno}`;
+            }
+
+            function caricaTabella() {
+                const search = $('#ricercaComuni').val();
+                const regioneId = $('#regioniSelect').val();
+                const provinciaId = $('#provinceSelect').val() || "";
+
+                $.get('/Comuni/GetComuni', { searchTerm: search, regioneFiltro: regioneId, 
+                    provinciaFiltro: provinciaId }, function (data) {
+                    let html = '';
+
+                    if (data.length === 0) {
+                        html = '<tr><td colspan="6" class="text-center table-secondary">Nessun comune trovato</td></tr>';
+                    } else {
+                        data.forEach(c => {
+                            html += `
+                                <tr class="table-secondary">
+                                    <td class="col-nome" >${c.descrizione}</td>
+                                    <td>${c.istat}</td>
+                                    <td>${formattaData(c.inizioValidita)}</td>
+                                    <td>${formattaData(c.fineValidita)}</td>
+                                    <td class="col-nome" >${c.nomeProvincia}</td>`;
+
+                            if (puoCreare || puoEliminare)
+                            {
+                                html += `
+                                    <td>
+                                        <div class="justify-content-center d-flex gap-2">`
+
+                                if (puoCreare)
+                                {
+                                    html += `<a href="/Comuni/ModificaComune?codiceComune=${c.codice}&codiceProvincia=${c.codiceProvincia}&codiceRegione=${c.codiceRegione}"
+                                               class="btn btn-outline-warning btn-uniform">
+                                               <i class="bi bi-pencil-square"></i>Edit
+                                            </a>`;
+                                }
+
+                                if (puoEliminare)
+                                {
+                                    html += `<a href="/Comuni/EliminaComune?id=${c.codice}"
+                                               class="btn btn-outline-danger btn-uniform">
+                                               <i class="bi bi-trash-fill"></i>Delete
+                                            </a>`;
+                                }
+
+                                html += `</div></td>`    
+                            }
+
+                            html += `</tr>`;
+                        });
+                    }
+                    $('#comuniBody').html(html);
+                });
+            }
+        });
+    </script>
+}

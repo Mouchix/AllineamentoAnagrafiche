@@ -1,0 +1,109 @@
+﻿@using AllineamentoAnagrafiche.Services
+@using AllineamentoAnagrafiche.Data
+@inject AuthService authService
+@{
+    ViewData["Title"] = "Home Page";
+    var claim = User.FindFirst("UserCodice")?.Value;
+    long.TryParse(claim, out long codiceUtente);
+    
+    // IEnumerable<Regione> regioni = Model.OrderBy(r => r.Istat);
+}
+
+<div class="container mt-4">
+    <div class="row text-center">
+        <div class="column">
+            <h1 class="display-4">Benvenuto in Allineamento Anagrafiche</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 text-center">
+            @if (authService.VerificaAutorizzazione(codiceUtente, Costanti.VisualizzaAutorizzazioni))
+            {
+                <a asp-controller="Autorizzazioni" asp-action="GestisciAutorizzazioni" class="btn btn-info btn-lg mt-3">Gestisci autorizzazioni</a>
+            }
+        </div>
+    </div>
+    @* <div class="row">
+        <div class="col-md-12">
+            <h4 class="text-primary border-bottom pb-2">Regioni</h4>
+            <div class="accordion shadow-sm" id="lista-regioni">
+                @foreach (var regione in regioni)
+                {
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button btn-regione collapsed bg-light" type="button" data-codice="@regione.Codice" data-nome="@regione.Descrizione" area-expanded="false"
+                            data-bs-toggle="collapse" data-bs-target="#collapse-@regione.Codice">
+                                @regione.Descrizione
+                            </button>
+                        </h2>
+                        <div id="collapse-@regione.Codice" class="collapse accordion-collapse">
+                            <div class="accordion-body" id="body-@regione.Codice">
+
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div> *@
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.btn-regione').click(function () {
+                const codReg = $(this).data('codice');
+                const nomeReg = $(this).data('nome');
+                const bodyReg = $(`#body-${codReg}`);
+
+                $.get('/Home/GetProvince', { codiceRegione: codReg }, function (data) {
+                    let html = `<div class="col-md-8">
+                                    <h4 class="text-titolo-provincia border-bottom pb-2">Provincie della Regione ${nomeReg}</h4>
+                                    <div class="accordion shadow-sm" id="lista-provincie-${nomeReg}">`;
+                    if (data.length === 0) {
+                        html += '<div class="p-3 text-danger">Nessuna Provincia trovata</div>';
+                    } else {
+                        data.forEach(p => {
+                            html += `<div class="accordion-item body-provincia">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed btn-provincia" type="button" data-codice="${p.proCodice}" data-nome="${p.proDescrizione}"
+                                            data-bs-toggle="collapse" data-bs-target="#collapse-prov-${p.proCodice}">
+                                                ${p.proDescrizione}
+                                            </button>
+                                        </h2>
+                                        <div id="collapse-prov-${p.proCodice}" class="collapse accordion-collapse">
+                                            <div class="accordion-body" id="body-prov-${p.proCodice}">
+
+                                            </div>
+                                        </div>
+                                    </div>`;
+                        });
+                    }
+                    bodyReg.html(html);
+                });
+            });
+
+            $(document).on('click', '.btn-provincia' ,function () {
+                const codPro = $(this).data('codice');
+                const nomePro = $(this).data('nome');
+                const bodyPro = $(`#body-prov-${codPro}`);
+
+                $.get('/Home/GetComuni', { codiceProvincia: codPro }, function (data) {
+                    let html = `<div class="col-md-8">
+                                    <h4 class="text-primary border-bottom pb-2">Comuni della Provincia ${nomePro}</h4>
+                                    <div class="list-group shadow-sm" id="lista-comuni-${nomePro}">`;
+                    if (data.length === 0) {
+                        html += '<div class="p-3 text-danger">Nessun Comune trovato</div>';
+                    } else 
+                    {
+                        data.forEach(c => {
+                            html += `<li class="body-comune list-group-item">${c.comDescrizione}</li>`
+                        });
+                    }
+                    bodyPro.html(html);
+                });
+            });
+        });
+    </script>
+}
