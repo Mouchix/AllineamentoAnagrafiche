@@ -182,7 +182,9 @@
                 const regioneId = $('#regioniSelect').val();
                 const $provSelect = $('#provinceSelect');
 
-                resetFormProvince();
+                if ($provSelect.val() && $provSelect.val() !== "") {
+                    resetFormProvince();
+                }
 
                 if (!regioneId) {
                     $provSelect.html('<option value="" selected disabled>Seleziona prima la regione</option>');
@@ -200,6 +202,7 @@
                     });
                     $provSelect.html(html);
                     $provSelect.prop('disabled', false);
+                    $provSelect.val("");
                 });
             }
 
