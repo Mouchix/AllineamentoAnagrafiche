@@ -1,0 +1,32 @@
+# Cartelle di compilazione e output
+bin/
+obj/
+publish/
+
+# Pacchetti NuGet
+packages/
+*.nupkg
+
+# File specifici di Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Entity Framework & Database
+# Ignoriamo il database locale e i file di log
+*.mdf
+*.ldf
+*.db
+*.sqlite
+App_Data/*.mdf
+App_Data/*.ldf
+
+# File di configurazione sensibili (User Secrets, Connection Strings locali)
+appsettings.Development.json
+secrets.json
+
+# Altri file di sistema
+.DS_Store
+Thumbs.db
