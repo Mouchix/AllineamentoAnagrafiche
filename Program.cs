@@ -20,6 +20,7 @@ builder.Services.AddScoped<UpsertService<Comune, ComuneDto>>();
 builder.Services.AddScoped<RemoveService<Regione, Provincia>>();
 builder.Services.AddScoped<RemoveService<Provincia, Comune>>();
 builder.Services.AddScoped<RemoveService<Comune, Comune>>();
+builder.Services.AddScoped<AutorizzazioniService>();
 builder.Services.AddScoped<LogService>();
 builder.Services.AddAuthentication(options =>
 {

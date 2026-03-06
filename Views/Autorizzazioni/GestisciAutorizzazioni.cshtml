@@ -19,7 +19,16 @@
                        placeholder="Cerca per username">
             </div>
         </div>
-        <div class="col-8 text-end">
+        <div class="col-md-3">
+            <select class="form-select" id="autorizzazioniSelect">
+                <option value="">Tutte le autorizzazioni</option>
+                @foreach (var autorizzazione in ViewBag.TipiAutorizzazioni)
+                {
+                    <option value="@autorizzazione">@autorizzazione</option>
+                }
+            </select>
+        </div>
+        <div class="col-5 text-end">
             <a asp-controller="Autorizzazioni" asp-action="CreaAutorizzazione" class="btn btn-outline-info">
                 <i class="bi bi-plus-circle"></i> &nbsp; Inserisci Nuova Autorizzazione
             </a>
@@ -35,7 +44,7 @@
         </thead>
         <tbody id="autorizzazioniBody">
             <tr>
-                <td colspan="3">Cercare un utente per vedere le autorizzazioni</td>
+                <td colspan="3">Cercare un utente o seleziona una tipologia per vedere le autorizzazioni</td>
             </tr>
         </tbody>
     </table>
@@ -48,23 +57,27 @@
             let timer;
             $('#ricercaAutorizzazioni').on('keyup search', function () {
                 clearTimeout(timer);
-                const query = $(this).val();
-
                 timer = setTimeout(function () {
-                    caricaTabella(query);
+                    caricaTabella();
                 }, 500);
             });
 
-            function caricaTabella(search = "") {
-                if(search == ""){
-                    html = '<tr><td colspan="3" class="text-center table-secondary">Cercare un utente per vedere le autorizzazioni</td></tr>';
+            $('#autorizzazioniSelect').on('change', function (){
+                caricaTabella();
+            });
+
+            function caricaTabella() {
+                const search = $('#ricercaAutorizzazioni').val();
+                const autorizzazione = $('#autorizzazioniSelect').val();
+                if(search == "" && autorizzazione == ""){
+                    html = '<tr><td colspan="3" class="text-center table-secondary">Cerca un utente o seleziona una tipologia per vedere le autorizzazioni</td></tr>';
                     $('#autorizzazioniBody').html(html);
                 }else{
-                    $.get('/Autorizzazioni/GetAutorizzazioni', { searchTerm: search }, function (data) {
+                    $.get('/Autorizzazioni/GetAutorizzazioni', { searchTerm: search, autorizzazioneFiltro: autorizzazione }, function (data) {
                         let html = '';
 
                         if (data.length === 0) {
-                            html = '<tr><td colspan="3" class="text-center table-secondary">Nessun utente trovato</td></tr>';
+                            html = '<tr><td colspan="3" class="text-center table-secondary">Nessuna autorizzazione trovata</td></tr>';
                         } else {
                             data.forEach(a => {
                                 html += `

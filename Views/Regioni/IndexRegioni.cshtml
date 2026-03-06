@@ -6,7 +6,11 @@
         <div class="col-6">
             <h2 class="text-primary">Lista Regioni</h2>
         </div>
-        
+        <div class="col-6 text-end">
+            <button type="button" id="btnEsporta" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel"></i> Esporta Excel
+            </button>
+        </div>
     </div>
 
     <div class="row mb-5 mt-4">
@@ -123,6 +127,14 @@
                     }
                     $('#regioniBody').html(html);
                 });
+            }
+
+            $('#btnEsporta').on('click', function (){
+                esportaExcel();
+            });
+
+            function esportaExcel() {
+                window.location.href = `/Regioni/EsportaRegioni`;
             }
         });
     </script>

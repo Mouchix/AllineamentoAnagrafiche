@@ -1,5 +1,72 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@using AllineamentoAnagrafiche.Models.ViewModels
+@model AutorizzazioneVM
+
+<form id="formCreaAutorizzazione" method="post">
+    <input type="hidden" asp-for="CodiceAutorizzazione" id="AutorizzazioneId" />
+    <div class="row pb-2">
+        <h2 class="text-primary">Crea Autorizzazione</h2>
+        <hr />
+    </div>
+    <div class="card border-primary mb-3">
+        <div class="card-header bg-primary text-white"><h5>Autorizzazione</h5></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label asp-for="Username">Username</label>
+                <input asp-for="Username" type="text" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="NomeMetodo">Autorizzazione</label>
+                <select asp-for="NomeMetodo" class="form-select">
+                    <option value="">Seleziona tipo autorizzazione</option>
+                    @foreach (var autorizzazione in ViewBag.TipiAutorizzazioni)
+                    {
+                        <option value="@autorizzazione">@autorizzazione</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 text-end">
+            <button type="button" class="btn btn-info" style="width:180px" id="btnCrea">Inserisci Autorizzazione</button>
+            <a asp-controller="Autorizzazioni" asp-action="GestisciAutorizzazioni" class="btn btn-secondary" style="width:180px">Torna alle Autorizzazioni</a>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+
+        $(document).ready(function () {
+
+            $('#btnCrea').click(function () {
+                const $form = $('#formCreaAutorizzazione');
+
+                if (!$form.valid()) return;
+
+                const payload = {
+                    "username": $('#Username').val(),
+                    "nomeMetodo": $('#NomeMetodo').val()
+                };
+
+                $.ajax({
+                    url: '/Autorizzazioni/InserisciAutorizzazione',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (result) {
+                        Notifica.success('Autorizzazione creata correttamente', () => {
+                            window.location.href = '/Autorizzazioni/GestisciAutorizzazioni';
+                        });
+                    },
+                    error: function(xhr) {
+                        Notifica.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
 }

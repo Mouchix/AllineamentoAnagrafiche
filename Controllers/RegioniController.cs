@@ -4,6 +4,7 @@ using AllineamentoAnagrafiche.Models;
 using AllineamentoAnagrafiche.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using OfficeOpenXml;
 
 namespace AllineamentoAnagrafiche.Controllers
 {
@@ -141,6 +142,44 @@ namespace AllineamentoAnagrafiche.Controllers
         {
             if (!CheckPermission(Costanti.RegioniVisualizza)) return null;
             return _dbContext.Regioni.Find(codiceRegione);
+        }
+
+        public IActionResult EsportaRegioni()
+        {
+            if (!CheckPermission(Costanti.RegioniVisualizza)) return Forbid();
+
+            var listaRegioni = _dbContext.Regioni.ToList();
+
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Regioni");
+
+            string[] headers = { "Codice ISTAT regione", "Nome Regione", "Data Inizio Validità", "Data Fine Validità"};
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = worksheet.Cells[1, i + 1];
+                cell.Value = headers[i];
+                cell.Style.Font.Bold = true;
+            }
+
+            worksheet.Column(3).Style.Numberformat.Format = "dd/mm/yyyy";
+            worksheet.Column(4).Style.Numberformat.Format = "dd/mm/yyyy";
+
+            for (int i = 0; i < listaRegioni.Count; i++)
+            {
+                worksheet.Cells[i + 2, 1].Value = listaRegioni[i].RegIstat;
+                worksheet.Cells[i + 2, 2].Value = listaRegioni[i].RegDescrizione;
+                worksheet.Cells[i + 2, 3].Value = listaRegioni[i].RegInizioValidita.ToString("dd/MM/yyyy");
+                worksheet.Cells[i + 2, 4].Value = listaRegioni[i].RegFineValidita.ToString("dd/MM/yyyy");
+            }
+
+            worksheet.Cells.AutoFitColumns();
+
+            var stream = new MemoryStream();
+            package.SaveAs(stream);
+            stream.Position = 0;
+
+            string fileName = $"Regioni.xlsx";
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
     }
 }

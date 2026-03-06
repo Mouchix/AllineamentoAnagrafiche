@@ -5,6 +5,7 @@ using AllineamentoAnagrafiche.Models.ViewModels;
 using AllineamentoAnagrafiche.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using OfficeOpenXml;
 
 namespace AllineamentoAnagrafiche.Controllers
 {
@@ -162,6 +163,65 @@ namespace AllineamentoAnagrafiche.Controllers
             }).ToList();
 
             return Json(result.Take(75));
+        }
+
+        public IActionResult EsportaComuni(int? codiceProvincia, int? codiceRegione)
+        {
+            if (!CheckPermission(Costanti.ComuniVisualizza)) return Forbid();
+
+            var query = from comune in _dbContext.Comuni
+                        join provincia in _dbContext.Province
+                        on comune.ComProCodice equals provincia.ProCodice
+                        join regione in _dbContext.Regioni
+                        on provincia.ProRegCodice equals regione.RegCodice
+                        select new { comune, provincia, regione };
+
+            if (codiceProvincia.HasValue && codiceProvincia > 0)
+            {
+                query = query.Where(x => x.provincia.ProCodice == codiceProvincia);
+            }
+
+            if (codiceRegione.HasValue && codiceRegione > 0)
+            {
+                query = query.Where(x => x.regione.RegCodice == codiceRegione);
+            }
+
+            var listaComuni = query.ToList();
+
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Comuni");
+
+            string[] headers = { "Codice ISTAT Comune", "Nome Comune", "Data Inizio Validità", "Data Fine Validità", "Codice ISTAT Provincia", "Nome Provincia", "Codice ISTAT Regione", "Nome Regione" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = worksheet.Cells[1, i + 1];
+                cell.Value = headers[i];
+                cell.Style.Font.Bold = true;
+            }
+
+            worksheet.Column(3).Style.Numberformat.Format = "dd/mm/yyyy";
+            worksheet.Column(4).Style.Numberformat.Format = "dd/mm/yyyy";
+
+            for (int i = 0; i < listaComuni.Count; i++)
+            {
+                worksheet.Cells[i + 2, 1].Value = listaComuni[i].comune.ComIstat;
+                worksheet.Cells[i + 2, 2].Value = listaComuni[i].comune.ComDescrizione;
+                worksheet.Cells[i + 2, 3].Value = listaComuni[i].comune.ComInizioValidita.ToString("dd/MM/yyyy");
+                worksheet.Cells[i + 2, 4].Value = listaComuni[i].comune.ComFineValidita.ToString("dd/MM/yyyy");
+                worksheet.Cells[i + 2, 5].Value = listaComuni[i].provincia.ProIstat;
+                worksheet.Cells[i + 2, 6].Value = listaComuni[i].provincia.ProDescrizione;
+                worksheet.Cells[i + 2, 7].Value = listaComuni[i].regione.RegIstat;
+                worksheet.Cells[i + 2, 8].Value = listaComuni[i].regione.RegDescrizione;
+            }
+
+            worksheet.Cells.AutoFitColumns();
+
+            var stream = new MemoryStream();
+            package.SaveAs(stream);
+            stream.Position = 0;
+
+            string fileName = $"Comuni.xlsx";
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
     }
 }

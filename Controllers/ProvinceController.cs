@@ -5,6 +5,7 @@ using AllineamentoAnagrafiche.Models.ViewModels;
 using AllineamentoAnagrafiche.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using OfficeOpenXml;
 
 namespace AllineamentoAnagrafiche.Controllers
 {
@@ -59,7 +60,6 @@ namespace AllineamentoAnagrafiche.Controllers
 
             return View(provinciaFromDb);
         }
-
 
         [HttpPost]
         //[ValidateAntiForgeryToken]
@@ -161,6 +161,56 @@ namespace AllineamentoAnagrafiche.Controllers
         {
             if (!CheckPermission(Costanti.ProvinceVisualizza)) return null;
             return _dbContext.Province.Find(codiceProvincia);
+        }
+
+        public IActionResult EsportaProvince(int? codiceRegione)
+        {
+            if (!CheckPermission(Costanti.ProvinceVisualizza)) return Forbid();
+
+            var query = from provincia in _dbContext.Province
+                        join regione in _dbContext.Regioni
+                        on provincia.ProRegCodice equals regione.RegCodice
+                        select new { provincia, regione };
+
+            if (codiceRegione.HasValue && codiceRegione > 0)
+            {
+                query = query.Where(x => x.regione.RegCodice == codiceRegione);
+            }
+
+            var listaProvince = query.ToList();
+
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Province");
+
+            string[] headers = { "Codice ISTAT Provincia", "Nome Provincia", "Data Inizio Validità", "Data Fine Validità", "Codice ISTAT Regione", "Nome Regione" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = worksheet.Cells[1, i + 1];
+                cell.Value = headers[i];
+                cell.Style.Font.Bold = true;
+            }
+
+            worksheet.Column(3).Style.Numberformat.Format = "dd/mm/yyyy";
+            worksheet.Column(4).Style.Numberformat.Format = "dd/mm/yyyy";
+
+            for (int i = 0; i < listaProvince.Count; i++)
+            {
+                worksheet.Cells[i + 2, 1].Value = listaProvince[i].provincia.ProIstat;
+                worksheet.Cells[i + 2, 2].Value = listaProvince[i].provincia.ProDescrizione;
+                worksheet.Cells[i + 2, 3].Value = listaProvince[i].provincia.ProInizioValidita.ToString("dd/MM/yyyy");
+                worksheet.Cells[i + 2, 4].Value = listaProvince[i].provincia.ProFineValidita.ToString("dd/MM/yyyy");
+                worksheet.Cells[i + 2, 5].Value = listaProvince[i].regione.RegIstat;
+                worksheet.Cells[i + 2, 6].Value = listaProvince[i].regione.RegDescrizione;
+            }
+
+            worksheet.Cells.AutoFitColumns();
+
+            var stream = new MemoryStream();
+            package.SaveAs(stream);
+            stream.Position = 0;
+
+            string fileName = $"Province.xlsx";
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
     }
 }

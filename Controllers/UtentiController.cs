@@ -15,9 +15,11 @@ namespace AllineamentoAnagrafiche.Controllers
 {
     public class UtentiController : BaseController
     {
-        public UtentiController(AnagraficheContext context, AuthService auth, LogService log)
+        private readonly AutorizzazioniService autorizzazioniService;
+        public UtentiController(AnagraficheContext context, AuthService auth, LogService log, AutorizzazioniService autorizzazioni)
             :base(context, auth, log)
         {
+            autorizzazioniService = autorizzazioni;
         }
 
         [AllowAnonymous]
@@ -62,7 +64,7 @@ namespace AllineamentoAnagrafiche.Controllers
             _dbContext.Utenti.Add(nuovoUtente);
             _dbContext.SaveChanges();
 
-            _authService.AssegnaPermessiBase(nuovoUtente.UserCodice);
+            autorizzazioniService.AssegnaPermessiBase(nuovoUtente.UserCodice);
 
             await CreaCookie(nuovoUtente);
 

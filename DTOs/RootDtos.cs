@@ -36,7 +36,6 @@ namespace AllineamentoAnagrafiche.DTOs
 
         [JsonPropertyName("nomeMetodo")]
         public string NomeMetodo { get; set; } = "";
-
     }
 
     public class AuthResponse

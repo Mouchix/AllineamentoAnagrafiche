@@ -18,12 +18,12 @@ namespace AllineamentoAnagrafiche.Data
         public const string ComuniUpsert = "ComuniController.AggiornaComuni";
         public const string ComuniDelete = "ComuniController.CancellaComuni";
 
+        public const string VisualizzaAutorizzazioni = "AutorizzazioniController.VisualizzaAutorizzazioni";
+
+        //USATE SOLO PER RENDERE PIU PRECISO IL LOG; NON VENGONO UTILIZZATI PER CONTROLLI
         public const string RegistraUtente = "UtentiController.RegistraUtente";
         public const string LoginUtente = "UtentiController.LoginUtente";
 
-        public const string VisualizzaAutorizzazioni = "AutorizzazioniController.VisualizzaAutorizzazioni";
-        
-        //USATE SOLO PER RENDERE PIU PRECISO IL LOG; NON VENGONO UTILIZZATI PER CONTROLLI
         public const string NuovaAutorizzazione = "AutorizzazioniController.InserisciAutorizzazione";
         public const string EliminaAutorizzazione = "AutorizzazioniController.EliminaAutorizzazione";
     }

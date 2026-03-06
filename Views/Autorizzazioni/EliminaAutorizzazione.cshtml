@@ -2,28 +2,58 @@
 @model AutorizzazioneVM
 
 <form id="formEliminaAutorizzazione" method="post">
+    <input type="hidden" asp-for="CodiceAutorizzazione" id="AutorizzazioneId" />
     <div class="row pb-2">
         <h2 class="text-primary">Elimina Autorizzazione</h2>
         <hr />
     </div>
     <div class="card border-primary mb-3">
-        <div class="card-header bg-primary text-white"><h5>Dati Regione</h5></div>
+        <div class="card-header bg-primary text-white"><h5>Autorizzazione</h5></div>
         <div class="card-body">
             <div class="mb-3">
-                <label asp-for="Username">Codice ISTAT</label>
+                <label asp-for="Username">Username</label>
                 <input asp-for="Username" type="text" class="form-control" disabled />
             </div>
 
             <div class="mb-3">
-                <label asp-for="NomeMetodo">Nome</label>
+                <label asp-for="NomeMetodo">Autorizzazione</label>
                 <input asp-for="NomeMetodo" type="text" class="form-control" disabled />
             </div>
         </div>
     </div>
     <div class="row mt-4">
         <div class="col-12 text-end">
-            <button type="button" class="btn btn-danger" style="width:180px" id="btnElimina">Elimina Regione</button>
-            <a asp-controller="Regioni" asp-action="IndexRegioni" class="btn btn-secondary" style="width:180px">Torna alle Regioni</a>
+            <button type="button" class="btn btn-danger" style="width:180px" id="btnElimina">Elimina Autorizzazione</button>
+            <a asp-controller="Autorizzazioni" asp-action="GestisciAutorizzazioni" class="btn btn-secondary" style="width:180px">Torna alle Autorizzazioni</a>
         </div>
     </div>
 </form>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $('#btnElimina').click(function () {
+
+                var idDaEliminare = $('#AutorizzazioneId').val();
+
+                $.ajax({
+                    url: '/Autorizzazioni/EliminaAutorizzazione',
+                    type: 'POST',
+                    data: { codiceAutorizzazione: idDaEliminare },
+                    success: function (result) {
+                        Notifica.success('Autorizzazione eliminata correttamente', () => {
+                            window.location.href = '/Autorizzazioni/GestisciAutorizzazioni';
+                        });
+                    },
+                    error: function(xhr) {
+                        Notifica.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+
+}
