@@ -162,7 +162,7 @@ namespace AllineamentoAnagrafiche.Controllers
                 codiceRegione = c.ComProCodiceNavigation.ProRegCodiceNavigation.Codice
             }).ToList();
 
-            return Json(result.Take(75));
+            return Json(result.Take(50));
         }
 
         public IActionResult EsportaComuni(int? codiceProvincia, int? codiceRegione)

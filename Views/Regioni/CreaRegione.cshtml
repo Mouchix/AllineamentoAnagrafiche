@@ -78,6 +78,26 @@
                     }
                 });
             });
+
+            //Funzione per il controllo dell'istat della regione
+            $('#Istat').on('change', function () {
+                const istat = $(this).val();
+                const $input = $(this);
+
+                if (istat.length > 0) {
+                    $.get('/Regioni/VerificaCodiceIstat', { tabella: 'regione', istat: istat }, function (data) {
+                        if (data.esiste) {
+                            Notifica.error("Questo codice ISTAT è già assegnato a un altra regione.");
+
+                            $input.addClass("is-invalid");
+                            $('#btnCrea').prop('disabled', true);
+                        } else {
+                            $input.removeClass("is-invalid").addClass("is-valid");
+                            $('#btnCrea').prop('disabled', false);
+                        }
+                    });
+                }
+            });
         });
     </script>
 

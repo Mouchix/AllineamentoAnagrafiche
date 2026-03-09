@@ -59,4 +59,17 @@ public abstract class BaseController : Controller
 
         return new AuthResponse { Response = "AA", Utente = utenteDb };
     }
+
+    [HttpGet]
+    public IActionResult VerificaCodiceIstat(string tabella, string istat)
+    {
+        bool esiste = tabella.ToLower() switch
+        {
+            "comune" => _dbContext.Comuni.Any(c => c.ComIstat == istat),
+            "provincia" => _dbContext.Province.Any(p => p.ProIstat == istat),
+            "regione" => _dbContext.Regioni.Any(r => r.RegIstat == istat),
+            _ => false
+        };
+        return Json(new { esiste });
+    }
 }

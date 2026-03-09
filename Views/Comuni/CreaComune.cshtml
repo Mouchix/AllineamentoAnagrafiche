@@ -154,6 +154,7 @@
 
             function caricaFormRegione() {
                 const regioneId = $('#regioniSelect').val();
+                $('#Regione_Istat').removeClass("is-invalid").addClass("is-valid");
 
                 if (regioneId === "") {
                     $('#Regione_Istat').val('');
@@ -208,6 +209,7 @@
 
             function caricaFormProvince(){
                 const provinciaId = $('#provinceSelect').val() || "";
+                $('#Provincia_Istat').removeClass("is-invalid").addClass("is-valid");
 
                 if (!provinciaId || provinciaId === "") {
                     resetFormProvince();
@@ -279,6 +281,36 @@
                         Notifica.error(xhr.responseText);
                     }
                 });
+            });
+
+            function validaIstat($input, tipoTabella) {
+                const istat = $input.val();
+                if (!istat) return;
+
+                $.get('/Comuni/VerificaCodiceIstat', { tabella: tipoTabella, istat: istat }, function (data) {
+                    if (data.esiste) {
+                        Notifica.error(`Attenzione: Il codice ISTAT ${istat} è già presente nell'anagrafica ${tipoTabella}.`);
+                        $input.addClass("is-invalid");
+                        $('#btnCrea').prop('disabled', true);
+                    } else {
+                        $input.removeClass("is-invalid").addClass("is-valid");
+                        if ($('.is-invalid').length === 0) {
+                            $('#btnCrea').prop('disabled', false);
+                        }
+                    }
+                });
+            }
+
+            $('#Comune_Istat').on('change', function() { validaIstat($(this), 'comune'); });
+            $('#Regione_Istat, #Provincia_Istat').on('change', function() {
+                const $selectAssociata = $(this).attr('id').includes('Regione') ? $('#regioniSelect') : $('#provinceSelect');
+
+                if ($selectAssociata.val() === "" || $selectAssociata.val() === null) {
+                    validaIstat($(this), $(this).attr('id').split('_')[0].toLowerCase());
+                } else {
+                    $(this).removeClass("is-invalid").addClass("is-valid");
+                    $('#btnCrea').prop('disabled', false);
+                }
             });
         });
     </script>
