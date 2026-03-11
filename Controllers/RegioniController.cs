@@ -10,10 +10,10 @@ namespace AllineamentoAnagrafiche.Controllers
 {
     public class RegioniController : BaseController
     {
-        private readonly UpsertService<Regione, RegioneDto> upsertService;
-        private readonly RemoveService<Regione, Provincia> removeService;
+        private readonly UpsertService<TRegioni, RegioneDto> upsertService;
+        private readonly RemoveService<TRegioni, TProvince> removeService;
 
-        public RegioniController(AnagraficheContext db, AuthService auth, UpsertService<Regione, RegioneDto> service, RemoveService<Regione, Provincia> remove, LogService lService)
+        public RegioniController(AnagraficheContext db, AuthService auth, UpsertService<TRegioni, RegioneDto> service, RemoveService<TRegioni, TProvince> remove, LogService lService)
             :base(db, auth, lService)
         {
             this.upsertService = service;
@@ -22,21 +22,21 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult IndexRegioni()
         {
-            if (!CheckPermission(Costanti.RegioniVisualizza)) return Forbid();
-            ViewBag.PuoCreare = CheckPermission(Costanti.RegioniUpsert);
-            ViewBag.PuoEliminare = CheckPermission(Costanti.RegioniDelete);
+            if (!User.HasClaim("Permission", Costanti.RegioniVisualizza)) return Forbid();
+            ViewBag.PuoCreare = User.HasClaim("Permission", Costanti.RegioniUpsert);
+            ViewBag.PuoEliminare = User.HasClaim("Permission", Costanti.RegioniDelete);
             return View();
         }
 
         public IActionResult CreaRegione()
         {
-            if (!CheckPermission(Costanti.RegioniVisualizza) || !CheckPermission(Costanti.RegioniUpsert)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.RegioniVisualizza) || !User.HasClaim("Permission", Costanti.RegioniUpsert)) return Forbid();
             return View();
         }
 
         public IActionResult ModificaRegione(int? codiceRegione)
         {
-            if (!CheckPermission(Costanti.RegioniVisualizza) || !CheckPermission(Costanti.RegioniUpsert)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.RegioniVisualizza) || !User.HasClaim("Permission", Costanti.RegioniUpsert)) return Forbid();
 
             var regionFromDb = GetRegione(codiceRegione);
 
@@ -45,7 +45,7 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult EliminaRegione(int? id)
         {
-            if (!CheckPermission(Costanti.RegioniVisualizza) || !CheckPermission(Costanti.RegioniDelete)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.RegioniVisualizza) || !User.HasClaim("Permission", Costanti.RegioniDelete)) return Forbid();
 
             var regionFromDb = GetRegione(id);
 
@@ -117,9 +117,9 @@ namespace AllineamentoAnagrafiche.Controllers
         [HttpGet]
         public IActionResult GetRegioni(string searchTerm = "")
         {
-            if (!CheckPermission(Costanti.RegioniVisualizza)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.RegioniVisualizza)) return Forbid();
 
-            var regioni = _dbContext.Regioni.AsQueryable();
+            var regioni = _dbContext.TRegionis.AsQueryable();
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -138,17 +138,17 @@ namespace AllineamentoAnagrafiche.Controllers
         }
 
         [HttpGet]
-        public Regione? GetRegione(int? codiceRegione)
+        public TRegioni? GetRegione(int? codiceRegione)
         {
-            if (!CheckPermission(Costanti.RegioniVisualizza)) return null;
-            return _dbContext.Regioni.Find(codiceRegione);
+            if (!User.HasClaim("Permission", Costanti.RegioniVisualizza)) return null;
+            return _dbContext.TRegionis.Find(codiceRegione);
         }
 
         public IActionResult EsportaRegioni()
         {
-            if (!CheckPermission(Costanti.RegioniVisualizza)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.RegioniVisualizza)) return Forbid();
 
-            var listaRegioni = _dbContext.Regioni.ToList();
+            var listaRegioni = _dbContext.TRegionis.ToList();
 
             using var package = new ExcelPackage();
             var worksheet = package.Workbook.Worksheets.Add("Regioni");

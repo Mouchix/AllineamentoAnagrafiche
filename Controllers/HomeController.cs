@@ -17,7 +17,7 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult Index()
         {
-            IEnumerable<Regione> regioni = _db.Regioni.ToList();
+            IEnumerable<TRegioni> regioni = _db.TRegionis.ToList();
             return View(regioni);
         }
 
@@ -35,7 +35,7 @@ namespace AllineamentoAnagrafiche.Controllers
         [HttpGet]
         public IActionResult GetProvince(int codiceRegione)
         {
-            var province = _db.Province
+            var province = _db.TProvinces
                 .Where(p => p.ProRegCodice == codiceRegione).ToList();
             return Json(province);
         }
@@ -43,7 +43,7 @@ namespace AllineamentoAnagrafiche.Controllers
         [HttpGet]
         public IActionResult GetComuni(int codiceProvincia)
         {
-            var comuni = _db.Comuni
+            var comuni = _db.TComunis
                 .Where(c => c.ComProCodice == codiceProvincia).ToList();
             return Json(comuni);
         }

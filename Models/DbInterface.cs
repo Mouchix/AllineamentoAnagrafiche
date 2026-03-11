@@ -11,7 +11,7 @@ namespace AllineamentoAnagrafiche.Models
         DateTime FineValidita { get; set; }
     }
 
-    public partial class Regione : DbInterface
+    public partial class TRegioni : DbInterface
     {
         [NotMapped]
         public int Codice => this.RegCodice;
@@ -29,7 +29,7 @@ namespace AllineamentoAnagrafiche.Models
         public DateTime FineValidita { get => this.RegFineValidita; set => this.RegFineValidita = value; }
     }
 
-    public partial class Provincia : DbInterface
+    public partial class TProvince : DbInterface
     {
         [NotMapped]
         public int Codice => this.ProCodice;
@@ -47,7 +47,7 @@ namespace AllineamentoAnagrafiche.Models
         public DateTime FineValidita { get => this.ProFineValidita; set => this.ProFineValidita = value; }
     }
 
-    public partial class Comune : DbInterface
+    public partial class TComuni : DbInterface
     {
         [NotMapped]
         public int Codice => this.ComCodice;

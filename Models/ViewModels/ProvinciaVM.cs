@@ -2,7 +2,7 @@
 {
     public class ProvinciaVM
     {
-        public Provincia? Provincia { get; set; }
-        public Regione? Regione { get; set; }
+        public TProvince? Provincia { get; set; }
+        public TRegioni? Regione { get; set; }
     }
 }

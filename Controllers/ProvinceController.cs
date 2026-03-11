@@ -11,11 +11,11 @@ namespace AllineamentoAnagrafiche.Controllers
 {
     public class ProvinceController : BaseController
     {
-        private readonly UpsertService<Regione, RegioneDto> rUpsertService;
-        private readonly UpsertService<Provincia, ProvinciaDto> pUpsertService;
-        private readonly RemoveService<Provincia, Comune> removeService;
+        private readonly UpsertService<TRegioni, RegioneDto> rUpsertService;
+        private readonly UpsertService<TProvince, ProvinciaDto> pUpsertService;
+        private readonly RemoveService<TProvince, TComuni> removeService;
 
-        public ProvinceController(AnagraficheContext db, AuthService auth, UpsertService<Regione, RegioneDto> rService, UpsertService<Provincia, ProvinciaDto> pService, RemoveService<Provincia, Comune> remove, LogService lService)
+        public ProvinceController(AnagraficheContext db, AuthService auth, UpsertService<TRegioni, RegioneDto> rService, UpsertService<TProvince, ProvinciaDto> pService, RemoveService<TProvince, TComuni> remove, LogService lService)
             : base(db, auth, lService)
         {
             this.rUpsertService = rService;
@@ -25,24 +25,24 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult IndexProvince()
         {
-            if (!CheckPermission(Costanti.ProvinceVisualizza)) return Forbid();
-            ViewBag.PuoCreare = CheckPermission(Costanti.ProvinceUpsert);
-            ViewBag.PuoEliminare = CheckPermission(Costanti.ProvinceDelete);
+            if (!User.HasClaim("Permission", Costanti.ProvinceVisualizza)) return Forbid();
+            ViewBag.PuoCreare = User.HasClaim("Permission", Costanti.ProvinceUpsert);
+            ViewBag.PuoEliminare = User.HasClaim("Permission", Costanti.ProvinceDelete);
             return View();
         }
 
         public IActionResult CreaProvincia()
         {
-            if (!CheckPermission(Costanti.ProvinceVisualizza) || !CheckPermission(Costanti.ProvinceUpsert)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.ProvinceVisualizza) || !User.HasClaim("Permission", Costanti.ProvinceUpsert)) return Forbid();
             return View();
         }
 
         public IActionResult ModificaProvincia(int? codiceProvincia, int? codiceRegione)
         {
-            if (!CheckPermission(Costanti.ProvinceVisualizza) || !CheckPermission(Costanti.ProvinceUpsert)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.ProvinceVisualizza) || !User.HasClaim("Permission", Costanti.ProvinceUpsert)) return Forbid();
 
-            Provincia? provinciaFromDb = GetProvincia(codiceProvincia);
-            Regione? regioneFromDb = _dbContext.Regioni.Find(codiceRegione);
+            TProvince? provinciaFromDb = GetProvincia(codiceProvincia);
+            TRegioni? regioneFromDb = _dbContext.TRegionis.Find(codiceRegione);
 
             ProvinciaVM provinciaVM = new()
             {
@@ -54,7 +54,7 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult EliminaProvincia(int? id)
         {
-            if (!CheckPermission(Costanti.ProvinceVisualizza) || !CheckPermission(Costanti.ProvinceDelete)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.ProvinceVisualizza) || !User.HasClaim("Permission", Costanti.ProvinceDelete)) return Forbid();
 
             var provinciaFromDb = GetProvincia(id);
 
@@ -129,9 +129,9 @@ namespace AllineamentoAnagrafiche.Controllers
         [HttpGet]
         public IActionResult GetProvince(string searchTerm = "", int? regioneFiltro = null)
         {
-            if (!CheckPermission(Costanti.ProvinceVisualizza)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.ProvinceVisualizza)) return Forbid();
 
-            var province = _dbContext.Province.AsQueryable();
+            var province = _dbContext.TProvinces.AsQueryable();
 
             if (regioneFiltro != null)
             {
@@ -157,18 +157,18 @@ namespace AllineamentoAnagrafiche.Controllers
         }
 
         [HttpGet]
-        public Provincia? GetProvincia(int? codiceProvincia)
+        public TProvince? GetProvincia(int? codiceProvincia)
         {
-            if (!CheckPermission(Costanti.ProvinceVisualizza)) return null;
-            return _dbContext.Province.Find(codiceProvincia);
+            if (!User.HasClaim("Permission", Costanti.ProvinceVisualizza)) return null;
+            return _dbContext.TProvinces.Find(codiceProvincia);
         }
 
         public IActionResult EsportaProvince(int? codiceRegione)
         {
-            if (!CheckPermission(Costanti.ProvinceVisualizza)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.ProvinceVisualizza)) return Forbid();
 
-            var query = from provincia in _dbContext.Province
-                        join regione in _dbContext.Regioni
+            var query = from provincia in _dbContext.TProvinces
+                        join regione in _dbContext.TRegionis
                         on provincia.ProRegCodice equals regione.RegCodice
                         select new { provincia, regione };
 

@@ -1,5 +1,6 @@
 ﻿using AllineamentoAnagrafiche.Data;
 using AllineamentoAnagrafiche.Models;
+using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
@@ -18,36 +19,37 @@ namespace AllineamentoAnagrafiche.Services
 
         public void AssegnaPermessiBase(long codiceUtente)
         {
-            var permessi = new List<string> {
+            var autorizzazioni = new List<string> {
                 Costanti.RegioniVisualizza,
                 Costanti.ProvinceVisualizza,
                 Costanti.ComuniVisualizza
             };
 
-            foreach (var permesso in permessi)
+            foreach (var autorizzazione in autorizzazioni)
             {
-                InserisciAutorizzazione(new Autorizzazione
+                TTipoAutorizzazioni? tipoAutorizzazione = _dbContext.TTipoAutorizzazionis.FirstOrDefault(t => t.NomeMetodo.Equals(autorizzazione));
+                InserisciAutorizzazione(new TAutorizzazioni
                 {
                     UserCodice = codiceUtente,
-                    NomeMetodo = permesso
+                    MetodoCodice = tipoAutorizzazione.TipoAutorizzazioneCodice
                 });
             }
         }
 
-        public String InserisciAutorizzazione(Autorizzazione auth)
+        public String InserisciAutorizzazione(TAutorizzazioni auth)
         {
-            bool giaPresente = _dbContext.Autorizzazioni.Any(a =>
+            bool giaPresente = _dbContext.TAutorizzazionis.Any(a =>
                 a.UserCodice == auth.UserCodice &&
-                a.NomeMetodo == auth.NomeMetodo);
+                a.MetodoCodice == auth.MetodoCodice);
 
             if (!giaPresente)
             {
-                Autorizzazione newAuth = new()
+                TAutorizzazioni newAuth = new()
                 {
                     UserCodice = auth.UserCodice,
-                    NomeMetodo = auth.NomeMetodo
+                    MetodoCodice = auth.MetodoCodice
                 };
-                _dbContext.Autorizzazioni.Add(newAuth);
+                _dbContext.TAutorizzazionis.Add(newAuth);
                 return "AA";
             }
 
@@ -56,14 +58,14 @@ namespace AllineamentoAnagrafiche.Services
 
         public String EliminaAutorizzazione(long idAutorizzazione)
         {
-            Autorizzazione? auth = _dbContext.Autorizzazioni.Find(idAutorizzazione);
+            TAutorizzazioni? auth = _dbContext.TAutorizzazionis.Find(idAutorizzazione);
 
             if (auth == null)
             {
                 return "AE: elemento non presente nel DB";
             }
 
-            _dbContext.Autorizzazioni.Remove(auth);
+            _dbContext.TAutorizzazionis.Remove(auth);
             _dbContext.SaveChanges();
             return "AA";
         }

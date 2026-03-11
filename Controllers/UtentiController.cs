@@ -42,7 +42,7 @@ namespace AllineamentoAnagrafiche.Controllers
                 return BadRequest("Dati non inseriti correttamente");
             }
 
-            bool userEsistente = _dbContext.Utenti.Any(u => u.Username.Equals(user.Username));
+            bool userEsistente = _dbContext.TUtentis.Any(u => u.Username.Equals(user.Username));
             if (userEsistente)
             {
                 _logService.RegistraLog(metodo, request, "AE: Username già esistente");
@@ -52,7 +52,7 @@ namespace AllineamentoAnagrafiche.Controllers
 
             using var hmac = new System.Security.Cryptography.HMACSHA512();
 
-            Utente nuovoUtente = new()
+            TUtenti nuovoUtente = new()
             {
                 Username = user.Username,
 
@@ -61,7 +61,7 @@ namespace AllineamentoAnagrafiche.Controllers
                 PasswordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(user.Password)),
             };
 
-            _dbContext.Utenti.Add(nuovoUtente);
+            _dbContext.TUtentis.Add(nuovoUtente);
             _dbContext.SaveChanges();
 
             autorizzazioniService.AssegnaPermessiBase(nuovoUtente.UserCodice);
@@ -87,7 +87,7 @@ namespace AllineamentoAnagrafiche.Controllers
             string metodo = Costanti.LoginUtente;
             string request = $"{{ \"Username\": \"{user.Username}\", \"Password\": \"********\" }}";
 
-            Utente? utenteDb = _dbContext.Utenti.FirstOrDefault(u => u.Username == user.Username);
+            TUtenti? utenteDb = _dbContext.TUtentis.FirstOrDefault(u => u.Username == user.Username);
 
             if(utenteDb == null)
             {
@@ -107,6 +107,16 @@ namespace AllineamentoAnagrafiche.Controllers
                     new Claim(ClaimTypes.Name, utenteDb.Username),
                     new Claim("UserCodice", utenteDb.UserCodice.ToString())
                 };
+
+                var autorizzazioniUtente = _dbContext.TAutorizzazionis
+                    .Where(a => a.UserCodice == utenteDb.UserCodice)
+                    .Select(a => a.MetodoCodiceNavigation.NomeMetodo)
+                    .ToList();
+
+                foreach (var nomePermesso in autorizzazioniUtente)
+                {
+                    claims.Add(new Claim("Permission", nomePermesso));
+                }
 
                 var claimsIdentity = new ClaimsIdentity(claims, "CookieAuthScheme");
 
@@ -131,7 +141,7 @@ namespace AllineamentoAnagrafiche.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        public async Task CreaCookie(Utente nuovoUtente)
+        public async Task CreaCookie(TUtenti nuovoUtente)
         {
             var claims = new List<Claim>
             {

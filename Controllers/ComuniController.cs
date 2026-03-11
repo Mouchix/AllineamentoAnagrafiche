@@ -11,12 +11,12 @@ namespace AllineamentoAnagrafiche.Controllers
 {
     public class ComuniController : BaseController
     {
-        private readonly UpsertService<Regione, RegioneDto> rUpsertService;
-        private readonly UpsertService<Provincia, ProvinciaDto> pUpsertService;
-        private readonly UpsertService<Comune, ComuneDto> cUpsertService;
-        private readonly RemoveService<Comune, Comune> removeService;
+        private readonly UpsertService<TRegioni, RegioneDto> rUpsertService;
+        private readonly UpsertService<TProvince, ProvinciaDto> pUpsertService;
+        private readonly UpsertService<TComuni, ComuneDto> cUpsertService;
+        private readonly RemoveService<TComuni, TComuni> removeService;
 
-        public ComuniController(AnagraficheContext db, AuthService auth, UpsertService<Regione, RegioneDto> rService, UpsertService<Provincia, ProvinciaDto> pService, UpsertService<Comune, ComuneDto> cService, RemoveService<Comune, Comune> remove, LogService lService)
+        public ComuniController(AnagraficheContext db, AuthService auth, UpsertService<TRegioni, RegioneDto> rService, UpsertService<TProvince, ProvinciaDto> pService, UpsertService<TComuni, ComuneDto> cService, RemoveService<TComuni, TComuni> remove, LogService lService)
             : base(db, auth, lService)
         {
             this.rUpsertService = rService;
@@ -27,24 +27,24 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult IndexComuni()
         {
-            if (!CheckPermission(Costanti.ComuniVisualizza)) return Forbid();
-            ViewBag.PuoCreare = CheckPermission(Costanti.ComuniUpsert);
-            ViewBag.PuoEliminare = CheckPermission(Costanti.ComuniDelete);
+            if (!User.HasClaim("Permission", Costanti.ComuniVisualizza)) return Forbid();
+            ViewBag.PuoCreare = User.HasClaim("Permission", Costanti.ComuniUpsert);
+            ViewBag.PuoEliminare = User.HasClaim("Permission", Costanti.ComuniDelete);
             return View();
         }
 
         public IActionResult CreaComune()
         {
-            if (!CheckPermission(Costanti.ComuniVisualizza) || !CheckPermission(Costanti.ComuniUpsert)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.ComuniVisualizza) || !User.HasClaim("Permission", Costanti.ComuniUpsert)) return Forbid();
             return View();
         }
 
         public IActionResult ModificaComune(int? codiceComune, int? codiceProvincia, int? codiceRegione)
         {
-            if (!CheckPermission(Costanti.ComuniVisualizza) || !CheckPermission(Costanti.ComuniUpsert)) return Forbid();
-            Comune? comuneFromDb = _dbContext.Comuni.Find(codiceComune);
-            Provincia? provinciaFromDb = _dbContext.Province.Find(codiceProvincia);
-            Regione? regioneFromDb = _dbContext.Regioni.Find(codiceRegione);
+            if (!User.HasClaim("Permission", Costanti.ComuniVisualizza) || !User.HasClaim("Permission", Costanti.ComuniUpsert)) return Forbid();
+            TComuni? comuneFromDb = _dbContext.TComunis.Find(codiceComune);
+            TProvince? provinciaFromDb = _dbContext.TProvinces.Find(codiceProvincia);
+            TRegioni? regioneFromDb = _dbContext.TRegionis.Find(codiceRegione);
 
             ComuneVM comuneVM = new()
             {
@@ -57,9 +57,9 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult EliminaComune(int? id)
         {
-            if (!CheckPermission(Costanti.ComuniVisualizza) || !CheckPermission(Costanti.ComuniDelete)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.ComuniVisualizza) || !User.HasClaim("Permission", Costanti.ComuniDelete)) return Forbid();
 
-            var comuneFromDb = _dbContext.Comuni.Find(id);
+            var comuneFromDb = _dbContext.TComunis.Find(id);
 
             return View(comuneFromDb);
         }
@@ -133,8 +133,8 @@ namespace AllineamentoAnagrafiche.Controllers
         [HttpGet]
         public IActionResult GetComuni(string searchTerm = "", int? regioneFiltro = null, int? provinciaFiltro = null)
         {
-            if (!CheckPermission(Costanti.ComuniVisualizza)) return Forbid();
-            var comuni = _dbContext.Comuni.AsQueryable();
+            if (!User.HasClaim("Permission", Costanti.ComuniVisualizza)) return Forbid();
+            var comuni = _dbContext.TComunis.AsQueryable();
 
             if (regioneFiltro != null)
             {
@@ -167,12 +167,12 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult EsportaComuni(int? codiceProvincia, int? codiceRegione)
         {
-            if (!CheckPermission(Costanti.ComuniVisualizza)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.ComuniVisualizza)) return Forbid();
 
-            var query = from comune in _dbContext.Comuni
-                        join provincia in _dbContext.Province
+            var query = from comune in _dbContext.TComunis
+                        join provincia in _dbContext.TProvinces
                         on comune.ComProCodice equals provincia.ProCodice
-                        join regione in _dbContext.Regioni
+                        join regione in _dbContext.TRegionis
                         on provincia.ProRegCodice equals regione.RegCodice
                         select new { comune, provincia, regione };
 

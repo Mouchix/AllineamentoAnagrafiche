@@ -40,7 +40,7 @@ namespace AllineamentoAnagrafiche.DTOs
 
     public class AuthResponse
     {
-        public Utente? Utente { get; set; } = null;
+        public TUtenti? Utente { get; set; } = null;
         public String Response { get; set; } = "";
     }
 }

@@ -1,5 +1,4 @@
-﻿using AllineamentoAnagrafiche.Data;
-using AllineamentoAnagrafiche.DTOs;
+﻿using AllineamentoAnagrafiche.DTOs;
 using AllineamentoAnagrafiche.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;

@@ -14,12 +14,12 @@ builder.Services.AddDbContext<AnagraficheContext>(options => options.UseSqlServe
     builder.Configuration.GetConnectionString("DefaultConnection")
     ));
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<UpsertService<Regione, RegioneDto>>();
-builder.Services.AddScoped<UpsertService<Provincia, ProvinciaDto>>();
-builder.Services.AddScoped<UpsertService<Comune, ComuneDto>>();
-builder.Services.AddScoped<RemoveService<Regione, Provincia>>();
-builder.Services.AddScoped<RemoveService<Provincia, Comune>>();
-builder.Services.AddScoped<RemoveService<Comune, Comune>>();
+builder.Services.AddScoped<UpsertService<TRegioni, RegioneDto>>();
+builder.Services.AddScoped<UpsertService<TProvince, ProvinciaDto>>();
+builder.Services.AddScoped<UpsertService<TComuni, ComuneDto>>();
+builder.Services.AddScoped<RemoveService<TRegioni, TProvince>>();
+builder.Services.AddScoped<RemoveService<TProvince, TComuni>>();
+builder.Services.AddScoped<RemoveService<TComuni, TComuni>>();
 builder.Services.AddScoped<AutorizzazioniService>();
 builder.Services.AddScoped<LogService>();
 builder.Services.AddAuthentication(options =>
@@ -34,6 +34,7 @@ builder.Services.AddAuthentication(options =>
     options.SlidingExpiration = true;
     options.AccessDeniedPath = "/Home/AccessoNegato";
 }).AddScheme<AuthenticationSchemeOptions, CustomAuthHandler>("HeaderAuthScheme", null)
+//prima controlla se è presente l'header, in caso di successo prova il login tramite handler se no con il cookie normale
 .AddPolicyScheme("SmartAuth", "SmartAuth", options =>
 {
     options.ForwardDefaultSelector = context =>

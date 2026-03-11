@@ -1,5 +1,4 @@
-﻿using AllineamentoAnagrafiche.Data;
-using AllineamentoAnagrafiche.Models;
+﻿using AllineamentoAnagrafiche.Models;
 using Azure.Core;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;

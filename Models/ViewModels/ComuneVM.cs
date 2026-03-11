@@ -2,8 +2,8 @@
 {
     public class ComuneVM
     {
-        public Comune? Comune { get; set; }
-        public Provincia? Provincia { get; set; }
-        public Regione? Regione { get; set; }
+        public TComuni? Comune { get; set; }
+        public TProvince? Provincia { get; set; }
+        public TRegioni? Regione { get; set; }
     }
 }

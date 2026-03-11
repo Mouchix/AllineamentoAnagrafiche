@@ -1,22 +1,26 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using AllineamentoAnagrafiche.Models;
+using AllineamentoAnagrafiche.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
-using AllineamentoAnagrafiche.Services;
 
 namespace AllineamentoAnagrafiche.Handlers
 {
     public class CustomAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
         private readonly AuthService _authService;
+        protected readonly AnagraficheContext _dbContext;
 
         public CustomAuthHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
-            AuthService authService) : base(options, logger, encoder)
+            AuthService authService,
+            AnagraficheContext db) : base(options, logger, encoder)
         {
             _authService = authService;
+            _dbContext = db;
         }
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -36,10 +40,21 @@ namespace AllineamentoAnagrafiche.Handlers
             }
 
             
-            var claims = new[] {
+            var claims = new List<Claim> {
                 new Claim(ClaimTypes.Name, utente.Username),
                 new Claim("UserCodice", utente.UserCodice.ToString())
             };
+
+            var autorizzazioniUtente = _dbContext.TAutorizzazionis
+                    .Where(a => a.UserCodice == utente.UserCodice)
+                    .Select(a => a.MetodoCodiceNavigation.NomeMetodo)
+                    .ToList();
+
+            foreach (var nomePermesso in autorizzazioniUtente)
+            {
+                claims.Add(new Claim("Permission", nomePermesso));
+            }
+
 
             var identity = new ClaimsIdentity(claims, Scheme.Name);
             var principal = new ClaimsPrincipal(identity);

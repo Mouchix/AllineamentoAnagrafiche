@@ -15,16 +15,19 @@ namespace AllineamentoAnagrafiche.Services
 
         public void RegistraLog(string metodo, string request, string response, long user = Costanti.SystemUserId)
         {
-            MessageLog messaggio = new()
+            TTipoAutorizzazioni? tipoAutorizzazione = _dbContext.TTipoAutorizzazionis.FirstOrDefault(t => t.NomeMetodo.Equals(metodo));
+            if(tipoAutorizzazione != null)
             {
-                LogUser = user,
-                LogMetodo = metodo,
-                LogDataOra = DateTime.Now,
-                LogMessaggioRequest = request,
-                LogMessaggioResponse = response
-            };
-
-            this._dbContext.LogMessaggi.Add(messaggio);
+                TLogMessaggi messaggio = new()
+                {
+                    LogUser = user,
+                    LogMetodo = tipoAutorizzazione.TipoAutorizzazioneCodice,
+                    LogDataOra = DateTime.Now,
+                    LogMessaggioRequest = request,
+                    LogMessaggioResponse = response
+                };
+                this._dbContext.TLogMessaggis.Add(messaggio);
+            }          
         }
     }
 }

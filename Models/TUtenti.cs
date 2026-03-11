@@ -1,6 +1,6 @@
 ﻿namespace AllineamentoAnagrafiche.Models;
 
-public class Utente
+public partial class TUtenti
 {
     public long UserCodice { get; set; }
 
@@ -10,7 +10,7 @@ public class Utente
 
     public byte[] PasswordHash { get; set; } = null!;
 
-    public virtual ICollection<Autorizzazione> Autorizzazionis { get; set; } = new List<Autorizzazione>();
+    public virtual ICollection<TAutorizzazioni> TAutorizzazionis { get; set; } = new List<TAutorizzazioni>();
 
-    public virtual ICollection<MessageLog> TLogMessaggis { get; set; } = new List<MessageLog>();
+    public virtual ICollection<TLogMessaggi> TLogMessaggis { get; set; } = new List<TLogMessaggi>();
 }

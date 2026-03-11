@@ -1,7 +1,8 @@
-﻿using AllineamentoAnagrafiche.Models;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace AllineamentoAnagrafiche.Data;
+namespace AllineamentoAnagrafiche.Models;
 
 public partial class AnagraficheContext : DbContext
 {
@@ -14,40 +15,43 @@ public partial class AnagraficheContext : DbContext
     {
     }
 
-    public virtual DbSet<Autorizzazione> Autorizzazioni { get; set; }
+    public virtual DbSet<TAutorizzazioni> TAutorizzazionis { get; set; }
 
-    public virtual DbSet<Comune> Comuni { get; set; }
+    public virtual DbSet<TComuni> TComunis { get; set; }
 
-    public virtual DbSet<MessageLog> LogMessaggi { get; set; }
+    public virtual DbSet<TLogMessaggi> TLogMessaggis { get; set; }
 
-    public virtual DbSet<Provincia> Province { get; set; }
+    public virtual DbSet<TProvince> TProvinces { get; set; }
 
-    public virtual DbSet<Regione> Regioni { get; set; }
+    public virtual DbSet<TRegioni> TRegionis { get; set; }
 
-    public virtual DbSet<Utente> Utenti { get; set; }
+    public virtual DbSet<TTipoAutorizzazioni> TTipoAutorizzazionis { get; set; }
+
+    public virtual DbSet<TUtenti> TUtentis { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Autorizzazione>(entity =>
+        modelBuilder.Entity<TAutorizzazioni>(entity =>
         {
-            entity.HasKey(e => e.AutorizzazioneCodice).HasName("PK__AUTORIZZ__E0708A62376B83DA");
+            entity.HasKey(e => e.AutorizzazioneCodice).HasName("PK__T_AUTORI__E0708A62CA57B9D8");
 
             entity.ToTable("T_AUTORIZZAZIONI");
 
             entity.Property(e => e.AutorizzazioneCodice).HasColumnName("AUTORIZZAZIONE_CODICE");
-            entity.Property(e => e.NomeMetodo)
-                .HasMaxLength(100)
-                .IsUnicode(false)
-                .HasColumnName("NOME_METODO");
+            entity.Property(e => e.MetodoCodice).HasColumnName("METODO_CODICE");
             entity.Property(e => e.UserCodice).HasColumnName("USER_CODICE");
 
-            entity.HasOne(d => d.UserCodiceNavigation).WithMany(p => p.Autorizzazionis)
+            entity.HasOne(d => d.MetodoCodiceNavigation).WithMany(p => p.TAutorizzazionis)
+                .HasForeignKey(d => d.MetodoCodice)
+                .HasConstraintName("FK__T_AUTORIZ__METOD__7B5B524B");
+
+            entity.HasOne(d => d.UserCodiceNavigation).WithMany(p => p.TAutorizzazionis)
                 .HasForeignKey(d => d.UserCodice)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__AUTORIZZA__USER___571DF1D5");
+                .HasConstraintName("FK__T_AUTORIZ__USER___7A672E12");
         });
 
-        modelBuilder.Entity<Comune>(entity =>
+        modelBuilder.Entity<TComuni>(entity =>
         {
             entity.HasKey(e => e.ComCodice).HasName("PK__T_COMUNI__0BE93EF370156AEA");
 
@@ -77,9 +81,9 @@ public partial class AnagraficheContext : DbContext
                 .HasConstraintName("FK__T_COMUNI__COM_PR__52593CB8");
         });
 
-        modelBuilder.Entity<MessageLog>(entity =>
+        modelBuilder.Entity<TLogMessaggi>(entity =>
         {
-            entity.HasKey(e => e.LogCodice).HasName("PK__T_LOG_ME__4372482A10CFA7DA");
+            entity.HasKey(e => e.LogCodice).HasName("PK__T_LOG_ME__4372482A587A5D1C");
 
             entity.ToTable("T_LOG_MESSAGGI");
 
@@ -93,19 +97,21 @@ public partial class AnagraficheContext : DbContext
             entity.Property(e => e.LogMessaggioResponse)
                 .IsUnicode(false)
                 .HasColumnName("LOG_MESSAGGIO_RESPONSE");
-            entity.Property(e => e.LogMetodo)
-                .HasMaxLength(100)
-                .IsUnicode(false)
-                .HasColumnName("LOG_METODO");
+            entity.Property(e => e.LogMetodo).HasColumnName("LOG_METODO");
             entity.Property(e => e.LogUser).HasColumnName("LOG_USER");
+
+            entity.HasOne(d => d.LogMetodoNavigation).WithMany(p => p.TLogMessaggis)
+                .HasForeignKey(d => d.LogMetodo)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__T_LOG_MES__LOG_M__02084FDA");
 
             entity.HasOne(d => d.LogUserNavigation).WithMany(p => p.TLogMessaggis)
                 .HasForeignKey(d => d.LogUser)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__T_LOG_MES__LOG_U__59FA5E80");
+                .HasConstraintName("FK__T_LOG_MES__LOG_U__01142BA1");
         });
 
-        modelBuilder.Entity<Provincia>(entity =>
+        modelBuilder.Entity<TProvince>(entity =>
         {
             entity.HasKey(e => e.ProCodice).HasName("PK__T_PROVIN__A4730B06E7B1A95F");
 
@@ -135,7 +141,7 @@ public partial class AnagraficheContext : DbContext
                 .HasConstraintName("FK__T_PROVINC__PRO_R__4E88ABD4");
         });
 
-        modelBuilder.Entity<Regione>(entity =>
+        modelBuilder.Entity<TRegioni>(entity =>
         {
             entity.HasKey(e => e.RegCodice).HasName("PK__T_REGION__E2D380FF0923D9CF");
 
@@ -160,7 +166,22 @@ public partial class AnagraficheContext : DbContext
                 .HasColumnName("REG_ISTAT");
         });
 
-        modelBuilder.Entity<Utente>(entity =>
+        modelBuilder.Entity<TTipoAutorizzazioni>(entity =>
+        {
+            entity.HasKey(e => e.TipoAutorizzazioneCodice).HasName("PK__T_TIPO_A__E57FE79FEF1151BB");
+
+            entity.ToTable("T_TIPO_AUTORIZZAZIONI");
+
+            entity.HasIndex(e => e.NomeMetodo, "UQ__T_TIPO_A__CA22017C6162ECA7").IsUnique();
+
+            entity.Property(e => e.TipoAutorizzazioneCodice).HasColumnName("TIPO_AUTORIZZAZIONE_CODICE");
+            entity.Property(e => e.NomeMetodo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("NOME_METODO");
+        });
+
+        modelBuilder.Entity<TUtenti>(entity =>
         {
             entity.HasKey(e => e.UserCodice).HasName("PK__USERS__7CAC83A4BAD7B225");
 

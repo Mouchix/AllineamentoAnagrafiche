@@ -4,9 +4,6 @@ using AllineamentoAnagrafiche.Models;
 using AllineamentoAnagrafiche.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
-using System.Diagnostics.Eventing.Reader;
-using System.Security.Claims;
 
 [Authorize]
 public abstract class BaseController : Controller
@@ -22,16 +19,9 @@ public abstract class BaseController : Controller
         _logService = log;
     }
 
-    protected bool CheckPermission(string metodo)
-    {
-        var claim = User.FindFirst("UserCodice")?.Value;
-        long.TryParse(claim, out long codiceUtente);
-        return _authService.VerificaAutorizzazione(codiceUtente, metodo);
-    }
-
     protected AuthResponse CheckUser(String metodo)
     {
-        Utente? utenteDb = null;
+        TUtenti? utenteDb = null;
 
         if (User.Identity?.IsAuthenticated == true)
         {
@@ -52,7 +42,7 @@ public abstract class BaseController : Controller
             return new AuthResponse { Response = "AE: Credenziali non inserite correttamente" };
         }
 
-        if (!_authService.VerificaAutorizzazione(utenteDb.UserCodice, metodo))
+        if (!User.HasClaim("Permission", metodo))
         {
             return new AuthResponse { Response = "AE: Utente non autorizzato", Utente = utenteDb };
         }
@@ -65,9 +55,9 @@ public abstract class BaseController : Controller
     {
         bool esiste = tabella.ToLower() switch
         {
-            "comune" => _dbContext.Comuni.Any(c => c.ComIstat == istat),
-            "provincia" => _dbContext.Province.Any(p => p.ProIstat == istat),
-            "regione" => _dbContext.Regioni.Any(r => r.RegIstat == istat),
+            "comune" => _dbContext.TComunis.Any(c => c.ComIstat == istat),
+            "provincia" => _dbContext.TProvinces.Any(p => p.ProIstat == istat),
+            "regione" => _dbContext.TRegionis.Any(r => r.RegIstat == istat),
             _ => false
         };
         return Json(new { esiste });

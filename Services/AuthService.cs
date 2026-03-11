@@ -18,7 +18,7 @@ namespace AllineamentoAnagrafiche.Services
             this.logService = logService;
         }
 
-        public Utente? VerificaAutenticazioneHeader(string loginHeader)
+        public TUtenti? VerificaAutenticazioneHeader(string loginHeader)
         {
             if (string.IsNullOrEmpty(loginHeader)) return null;
 
@@ -28,7 +28,7 @@ namespace AllineamentoAnagrafiche.Services
             string username = parts[0];
             string password = parts[1];
 
-            var utente = _dbContext.Utenti.FirstOrDefault(u => u.Username == username);
+            var utente = _dbContext.TUtentis.FirstOrDefault(u => u.Username == username);
             if (utente == null) return null;
 
             using var hmac = new System.Security.Cryptography.HMACSHA512(utente.Salt);
@@ -37,7 +37,7 @@ namespace AllineamentoAnagrafiche.Services
             return hashCalcolato.SequenceEqual(utente.PasswordHash) ? utente : null;
         }
 
-        public Utente? VerificaAutenticazioneCookie(ClaimsPrincipal user)
+        public TUtenti? VerificaAutenticazioneCookie(ClaimsPrincipal user)
         {
             if (user.Identity == null || !user.Identity.IsAuthenticated) return null;
 
@@ -46,14 +46,10 @@ namespace AllineamentoAnagrafiche.Services
             if (string.IsNullOrEmpty(claimCodice) || !long.TryParse(claimCodice, out long codice))
                 return null;
 
-            return _dbContext.Utenti.FirstOrDefault(u => u.UserCodice == codice);
+            return _dbContext.TUtentis.FirstOrDefault(u => u.UserCodice == codice);
         }
 
-        public bool VerificaAutorizzazione(long userCodice, string metodo)
-        {
-            return _dbContext.Autorizzazioni.Any(a =>
-                a.UserCodice == userCodice && a.NomeMetodo == metodo);
-        }
+
 
     }   
 }

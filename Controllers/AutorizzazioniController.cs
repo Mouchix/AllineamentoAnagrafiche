@@ -5,6 +5,8 @@ using AllineamentoAnagrafiche.Models.ViewModels;
 using AllineamentoAnagrafiche.Services;
 using Humanizer.Localisation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
+using System.Net;
 
 namespace AllineamentoAnagrafiche.Controllers
 {
@@ -19,7 +21,7 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult GestisciAutorizzazioni()
         {
-            if (!CheckPermission(Costanti.VisualizzaAutorizzazioni)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.VisualizzaAutorizzazioni)) return Forbid();
 
             ViewBag.TipiAutorizzazioni = autorizzazioniService.GetTipiAutorizzazioni();
 
@@ -28,7 +30,7 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult CreaAutorizzazione()
         {
-            if (!CheckPermission(Costanti.VisualizzaAutorizzazioni)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.VisualizzaAutorizzazioni)) return Forbid();
 
             ViewBag.TipiAutorizzazioni = autorizzazioniService.GetTipiAutorizzazioni();
 
@@ -37,7 +39,7 @@ namespace AllineamentoAnagrafiche.Controllers
 
         public IActionResult EliminaAutorizzazione(int? codiceAutorizzazione)
         {
-            if (!CheckPermission(Costanti.VisualizzaAutorizzazioni)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.VisualizzaAutorizzazioni)) return Forbid();
 
             AutorizzazioneVM? autorizzazione = GetAutorizzazione(codiceAutorizzazione);
             return View(autorizzazione);
@@ -53,18 +55,26 @@ namespace AllineamentoAnagrafiche.Controllers
 
             if (result.Response.Equals("AA"))
             {
-                var utenteTarget = _dbContext.Utenti.FirstOrDefault(u => u.Username == authorization.Username);
+                var utenteTarget = _dbContext.TUtentis.FirstOrDefault(u => u.Username == authorization.Username);
                 if (utenteTarget == null)
                 {
                     result.Response = "AE: Username non valido";
                 }
                 else
                 {
-                    result.Response = autorizzazioniService.InserisciAutorizzazione(new Autorizzazione
+                    TTipoAutorizzazioni? tipoAutorizzazione = GetTipoAutorizzazione(authorization.NomeMetodo);
+                    if(tipoAutorizzazione != null)
                     {
-                        UserCodice = utenteTarget.UserCodice,
-                        NomeMetodo = authorization.NomeMetodo
-                    });
+                        result.Response = autorizzazioniService.InserisciAutorizzazione(new TAutorizzazioni
+                        {
+                            UserCodice = utenteTarget.UserCodice,
+                            MetodoCodice = tipoAutorizzazione.TipoAutorizzazioneCodice
+                        });
+                    }
+                    else
+                    {
+                        result.Response = "AE: Tipo Autorizzazione non valido";
+                    }
                 }
             }
             _logService.RegistraLog(metodo, request, result.Response, result.Utente?.UserCodice ?? Costanti.SystemUserId);
@@ -92,12 +102,14 @@ namespace AllineamentoAnagrafiche.Controllers
         [HttpGet]
         public IActionResult GetAutorizzazioni(string searchterm, string autorizzazioneFiltro)
         {
-            if (!CheckPermission(Costanti.VisualizzaAutorizzazioni)) return Forbid();
+            if (!User.HasClaim("Permission", Costanti.VisualizzaAutorizzazioni)) return Forbid();
 
-            var query = from utente in _dbContext.Utenti
-                        join autorizzazione in _dbContext.Autorizzazioni
-                        on utente.UserCodice equals autorizzazione.UserCodice
-                        select new { utente, autorizzazione };
+            var query = from autorizzazione in _dbContext.TAutorizzazionis
+                        join utente in _dbContext.TUtentis
+                        on autorizzazione.UserCodice equals utente.UserCodice
+                        join tipoAutorizzazione in _dbContext.TTipoAutorizzazionis
+                        on autorizzazione.MetodoCodice equals tipoAutorizzazione.TipoAutorizzazioneCodice
+                        select new { utente, autorizzazione, tipoAutorizzazione };
 
             if (!string.IsNullOrEmpty(searchterm))
             {
@@ -106,14 +118,14 @@ namespace AllineamentoAnagrafiche.Controllers
 
             if (!string.IsNullOrEmpty(autorizzazioneFiltro))
             {
-                query = query.Where(x => x.autorizzazione.NomeMetodo == autorizzazioneFiltro);
-            }
+                query = query.Where(x => x.tipoAutorizzazione.NomeMetodo == autorizzazioneFiltro);
+            }              
 
             var result = query.Select(x => new AutorizzazioneVM
             {
                 CodiceAutorizzazione = x.autorizzazione.AutorizzazioneCodice,
                 Username = x.utente.Username,
-                NomeMetodo = x.autorizzazione.NomeMetodo
+                NomeMetodo = x.tipoAutorizzazione.NomeMetodo
             }).ToList();
 
             return Json(result);
@@ -122,21 +134,22 @@ namespace AllineamentoAnagrafiche.Controllers
         [HttpGet]
         public AutorizzazioneVM? GetAutorizzazione(long? codiceAutorizzazione)
         {
-            if (!CheckPermission(Costanti.VisualizzaAutorizzazioni)) return null;
+            if (!User.HasClaim("Permission", Costanti.VisualizzaAutorizzazioni)) return null;
 
-            Autorizzazione? autorizzazioneDb = _dbContext.Autorizzazioni.Find(codiceAutorizzazione);
+            TAutorizzazioni? autorizzazioneDb = _dbContext.TAutorizzazionis.Find(codiceAutorizzazione);
 
             if (autorizzazioneDb != null)
             {
-                Utente? utenteDb = _dbContext.Utenti.Find(autorizzazioneDb.UserCodice);
+                TUtenti? utenteDb = _dbContext.TUtentis.Find(autorizzazioneDb.UserCodice);
+                TTipoAutorizzazioni? tipoAutorizzazione = _dbContext.TTipoAutorizzazionis.Find(autorizzazioneDb.MetodoCodice);
 
-                if(utenteDb != null)
+                if(utenteDb != null && tipoAutorizzazione !=  null)
                 {
                     return new()
                     {
                         CodiceAutorizzazione = autorizzazioneDb.AutorizzazioneCodice,
                         Username = utenteDb.Username,
-                        NomeMetodo = autorizzazioneDb.NomeMetodo
+                        NomeMetodo = tipoAutorizzazione.NomeMetodo
                     };
                 }
 
@@ -144,5 +157,9 @@ namespace AllineamentoAnagrafiche.Controllers
             return null;
         }
         
+        private TTipoAutorizzazioni? GetTipoAutorizzazione(string nomeMetodo)
+        {
+            return _dbContext.TTipoAutorizzazionis.FirstOrDefault(t => t.NomeMetodo.Equals(nomeMetodo));
+        }
     }
 }

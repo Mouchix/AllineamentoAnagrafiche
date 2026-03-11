@@ -6,9 +6,9 @@
     var claim = User.FindFirst("UserCodice")?.Value;
     long.TryParse(claim, out long codiceUtente);
 
-    bool puoVedereRegioni = authService.VerificaAutorizzazione(codiceUtente, Costanti.RegioniVisualizza);
-    bool puoVedereProvince = authService.VerificaAutorizzazione(codiceUtente, Costanti.ProvinceVisualizza);
-    bool puoVedereComuni = authService.VerificaAutorizzazione(codiceUtente, Costanti.ComuniVisualizza);
+    bool puoVedereRegioni = User.HasClaim("Permission", Costanti.RegioniVisualizza);
+    bool puoVedereProvince = User.HasClaim("Permission", Costanti.ProvinceVisualizza);
+    bool puoVedereComuni = User.HasClaim("Permission", Costanti.ComuniVisualizza);
 }
 
 <!DOCTYPE html>
@@ -74,6 +74,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.validate/1.19.1/localization/messages_it.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

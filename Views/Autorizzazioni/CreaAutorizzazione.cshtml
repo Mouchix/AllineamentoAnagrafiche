@@ -12,18 +12,20 @@
         <div class="card-body">
             <div class="mb-3">
                 <label asp-for="Username">Username</label>
-                <input asp-for="Username" type="text" class="form-control" />
+                <input asp-for="Username" type="text" class="form-control" required/>
+                <span asp-validation-for="Username" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="NomeMetodo">Autorizzazione</label>
-                <select asp-for="NomeMetodo" class="form-select">
+                <select asp-for="NomeMetodo" class="form-select" required>
                     <option value="">Seleziona tipo autorizzazione</option>
                     @foreach (var autorizzazione in ViewBag.TipiAutorizzazioni)
                     {
                         <option value="@autorizzazione">@autorizzazione</option>
                     }
                 </select>
+                <span asp-validation-for="NomeMetodo" class="text-danger"></span>
             </div>
         </div>
     </div>
