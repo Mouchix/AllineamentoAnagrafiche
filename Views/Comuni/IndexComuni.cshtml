@@ -10,11 +10,15 @@
             <button type="button" id="btnEsporta" class="btn btn-success">
                 <i class="bi bi-file-earmark-excel"></i> Esporta Excel
             </button>
+            <select class="btn btn-success" id="tipoEsportazione">
+                <option value="xlsx">.xlsx</option>
+                <option value="csv">.csv</option>
+            </select>
         </div>
     </div>
 
     <div class="row mb-5 mt-4">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="input-group">
                 <span class="input-group-text bg-white">
                     <i class="bi bi-search text-muted"></i>
@@ -23,7 +27,7 @@
                        placeholder="Scrivi il nome del comune...">
             </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
             <select class="form-select" id="regioniSelect">
                 
             </select>
@@ -193,14 +197,15 @@
             }
 
             $('#btnEsporta').on('click', function (){
-                esportaExcel();
+                const value = $('#tipoEsportazione').val();
+                esportaExcel(value);
             });
 
-            function esportaExcel() {
+            function esportaExcel(value) {
                 const idProvincia = $('#provinceSelect').val() || 0;
                 const idRegione = $('#regioniSelect').val() || 0;
 
-                window.location.href = `/Comuni/EsportaComuni?codiceProvincia=${idProvincia}&codiceRegione=${idRegione}`;
+                window.location.href = `/Comuni/EsportaComuni?tipo=${value}&codiceProvincia=${idProvincia}&codiceRegione=${idRegione}`;
             }
         });
     </script>

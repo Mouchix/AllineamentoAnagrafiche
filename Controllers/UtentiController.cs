@@ -1,15 +1,11 @@
 ﻿using AllineamentoAnagrafiche.Data;
 using AllineamentoAnagrafiche.DTOs;
 using AllineamentoAnagrafiche.Models;
-using AllineamentoAnagrafiche.Models.ViewModels;
 using AllineamentoAnagrafiche.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.Net;
 using System.Security.Claims;
-using static Microsoft.CodeAnalysis.CSharp.SyntaxTokenParser;
 
 namespace AllineamentoAnagrafiche.Controllers
 {

@@ -13,6 +13,7 @@
             <div class="mb-3">
                 <label asp-for="Username">Username</label>
                 <input asp-for="Username" type="text" class="form-control" required/>
+                <ul class="dropdown-menu w-100" id="utentiSuggeriti" style="max-height: 200px; overflow-y: auto;"></ul>
                 <span asp-validation-for="Username" class="text-danger"></span>
             </div>
 
@@ -44,6 +45,16 @@
 
         $(document).ready(function () {
 
+            let timer;
+            $('#Username').on('keyup', function () {
+                clearTimeout(timer);
+                const query = $(this).val();
+
+                timer = setTimeout(function () {
+                    caricaUtentiSuggeriti(query);
+                }, 500);
+            });
+
             $('#btnCrea').click(function () {
                 const $form = $('#formCreaAutorizzazione');
 
@@ -69,6 +80,34 @@
                     }
                 });
             });
+
+            $(document).on('click', '.item-suggerito', function (e) {
+                e.preventDefault();
+                const scelto = $(this).text();
+                $('#Username').val(scelto);
+                $('#utentiSuggeriti').removeClass('show');
+                $('#Username').valid();
+            });
+
+            $(document).on('click', function (e) {
+                $('#utentiSuggeriti').removeClass('show');
+            });
+
+            function caricaUtentiSuggeriti(search) {
+                $.get('/Autorizzazioni/GetUsername', { searchTerm: search }, function (data) {
+                    let html = '';
+
+                    if (data && data.length > 0) {
+                        data.forEach(u => {
+                            html += `<li><a class="dropdown-item item-suggerito" href="#">${u.username}</a></li>`;
+                        });
+                        $('#utentiSuggeriti').html(html).addClass('show');
+                    }
+
+                    $('#utentiSuggeriti').html(html);
+                });
+            }
+
         });
     </script>
 }

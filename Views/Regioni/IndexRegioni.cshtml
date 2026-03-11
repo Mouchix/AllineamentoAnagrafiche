@@ -10,6 +10,10 @@
             <button type="button" id="btnEsporta" class="btn btn-success">
                 <i class="bi bi-file-earmark-excel"></i> Esporta Excel
             </button>
+            <select class="btn btn-success" id="tipoEsportazione">
+                <option value="xlsx">.xlsx</option>
+                <option value="csv">.csv</option>
+            </select>
         </div>
     </div>
 
@@ -130,11 +134,12 @@
             }
 
             $('#btnEsporta').on('click', function (){
-                esportaExcel();
+                const value = $('#tipoEsportazione').val();
+                esportaExcel(value);
             });
 
-            function esportaExcel() {
-                window.location.href = `/Regioni/EsportaRegioni`;
+            function esportaExcel(value) {
+                window.location.href = `/Regioni/EsportaRegioni?tipo=${value}`;
             }
         });
     </script>

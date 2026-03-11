@@ -56,7 +56,7 @@ namespace AllineamentoAnagrafiche.Controllers
             if (result.Response.Equals("AA"))
             {
                 var utenteTarget = _dbContext.TUtentis.FirstOrDefault(u => u.Username == authorization.Username);
-                if (utenteTarget == null)
+                if (utenteTarget == null || utenteTarget.Username.Equals("SYSTEM"))
                 {
                     result.Response = "AE: Username non valido";
                 }
@@ -156,7 +156,28 @@ namespace AllineamentoAnagrafiche.Controllers
             }
             return null;
         }
-        
+
+        [HttpGet]
+        public IActionResult GetUsername(string searchTerm)
+        {
+            if (!User.HasClaim("Permission", Costanti.VisualizzaAutorizzazioni)) return Forbid();
+
+            var utenti = _dbContext.TUtentis.AsQueryable();
+
+            utenti = utenti.Where(u => !u.Username.Equals("SYSTEM"));
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                utenti = utenti.Where(u => u.Username.Contains(searchTerm));
+            }
+
+            var result = utenti.Select(u => new {
+                username = u.Username
+            }).Take(15).ToList();
+
+            return Json(result);
+        }
+
         private TTipoAutorizzazioni? GetTipoAutorizzazione(string nomeMetodo)
         {
             return _dbContext.TTipoAutorizzazionis.FirstOrDefault(t => t.NomeMetodo.Equals(nomeMetodo));

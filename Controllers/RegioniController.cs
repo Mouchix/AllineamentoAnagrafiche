@@ -2,9 +2,15 @@
 using AllineamentoAnagrafiche.DTOs;
 using AllineamentoAnagrafiche.Models;
 using AllineamentoAnagrafiche.Services;
+using CsvHelper;
+using CsvHelper.Configuration;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Scripting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
+using System.Globalization;
+using System.Text;
 
 namespace AllineamentoAnagrafiche.Controllers
 {
@@ -14,7 +20,7 @@ namespace AllineamentoAnagrafiche.Controllers
         private readonly RemoveService<TRegioni, TProvince> removeService;
 
         public RegioniController(AnagraficheContext db, AuthService auth, UpsertService<TRegioni, RegioneDto> service, RemoveService<TRegioni, TProvince> remove, LogService lService)
-            :base(db, auth, lService)
+            : base(db, auth, lService)
         {
             this.upsertService = service;
             this.removeService = remove;
@@ -97,7 +103,7 @@ namespace AllineamentoAnagrafiche.Controllers
 
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public IActionResult CancellaRegioni([FromBody]DeleteByIstatRequest request)
+        public IActionResult CancellaRegioni([FromBody] DeleteByIstatRequest request)
         {
             string metodo = Costanti.RegioniDelete;
 
@@ -126,7 +132,8 @@ namespace AllineamentoAnagrafiche.Controllers
                 regioni = regioni.Where(r => r.RegDescrizione.Contains(searchTerm));
             }
 
-            var result = regioni.Select(r => new {
+            var result = regioni.Select(r => new
+            {
                 codice = r.Codice,
                 descrizione = r.Descrizione,
                 istat = r.Istat,
@@ -144,42 +151,59 @@ namespace AllineamentoAnagrafiche.Controllers
             return _dbContext.TRegionis.Find(codiceRegione);
         }
 
-        public IActionResult EsportaRegioni()
+        public IActionResult EsportaRegioni(string tipo)
         {
             if (!User.HasClaim("Permission", Costanti.RegioniVisualizza)) return Forbid();
 
-            var listaRegioni = _dbContext.TRegionis.ToList();
+            var listaRegioni = _dbContext.TRegionis.AsNoTracking().ToList();
 
-            using var package = new ExcelPackage();
-            var worksheet = package.Workbook.Worksheets.Add("Regioni");
+            var dati = listaRegioni.Select(r => new {
+                Codice_Istat_Regione = r.RegIstat,
+                Nome_Regione = r.RegDescrizione,
+                Data_Inizio_Validita = r.RegInizioValidita.ToString("dd/MM/yyyy"),
+                Data_Fine_Validita = r.RegFineValidita.ToString("dd/MM/yyyy")
+            }).ToList();
 
-            string[] headers = { "Codice ISTAT regione", "Nome Regione", "Data Inizio Validità", "Data Fine Validità"};
-            for (int i = 0; i < headers.Length; i++)
+            if ("xlsx".Equals(tipo, StringComparison.OrdinalIgnoreCase))
             {
-                var cell = worksheet.Cells[1, i + 1];
-                cell.Value = headers[i];
-                cell.Style.Font.Bold = true;
+                using var package = new ExcelPackage();
+                var ws = package.Workbook.Worksheets.Add("Regioni");
+
+                ws.Cells["A1"].LoadFromCollection(dati, true);
+
+                string[] customHeaders = { "Codice ISTAT Regione", "Nome Regione", " Data Inizio Validità", "Data Fine Validità"};
+                for (int i = 0; i < customHeaders.Length; i++)
+                {
+                    ws.Cells[1, i + 1].Value = customHeaders[i];
+                }
+
+                using (var headerRange = ws.Cells[1, 1, 1, 4])
+                {
+                    headerRange.Style.Font.Bold = true;
+                    headerRange.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                }
+
+                ws.Cells.AutoFitColumns();
+
+                return File(package.GetAsByteArray(),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "Regioni.xlsx");
             }
 
-            worksheet.Column(3).Style.Numberformat.Format = "dd/mm/yyyy";
-            worksheet.Column(4).Style.Numberformat.Format = "dd/mm/yyyy";
-
-            for (int i = 0; i < listaRegioni.Count; i++)
+            if ("csv".Equals(tipo, StringComparison.OrdinalIgnoreCase))
             {
-                worksheet.Cells[i + 2, 1].Value = listaRegioni[i].RegIstat;
-                worksheet.Cells[i + 2, 2].Value = listaRegioni[i].RegDescrizione;
-                worksheet.Cells[i + 2, 3].Value = listaRegioni[i].RegInizioValidita.ToString("dd/MM/yyyy");
-                worksheet.Cells[i + 2, 4].Value = listaRegioni[i].RegFineValidita.ToString("dd/MM/yyyy");
+                var config = new CsvConfiguration(CultureInfo.InvariantCulture) { Delimiter = ";" };
+
+                using var ms = new MemoryStream();
+                using var sw = new StreamWriter(ms, Encoding.UTF8);
+                using var csv = new CsvWriter(sw, config);
+                csv.WriteRecords(dati);
+                sw.Flush();
+                return File(ms.ToArray(), "text/csv", "Regioni.csv");
             }
 
-            worksheet.Cells.AutoFitColumns();
-
-            var stream = new MemoryStream();
-            package.SaveAs(stream);
-            stream.Position = 0;
-
-            string fileName = $"Regioni.xlsx";
-            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            return BadRequest("Formato non supportato");
         }
     }
 }
